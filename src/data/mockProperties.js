@@ -1,0 +1,268 @@
+export const MOCK_PROPERTIES = [
+  {
+    _id: 'prop-1',
+    id: 'prop-1',
+    title: 'The Glass Pavilion Villa',
+    description: 'Stunning modern architectural masterpiece featuring floor-to-ceiling glass walls, infinity pool, and panoramic city views.',
+    price: 12450000,
+    type: 'sale',
+    propertyType: 'villa',
+    bedrooms: 5,
+    bathrooms: 6,
+    areaSqft: 6800,
+    address: { street: '9420 Wilshire Blvd', city: 'Los Angeles', state: 'CA', zip: '90210' },
+    location: { type: 'Point', coordinates: [-118.4003, 34.0696] }, // [lng, lat]
+    lat: 34.0696,
+    lng: -118.4003,
+    images: [
+      'https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80'
+    ],
+    amenities: ['pool', 'gym', 'parking', 'garage', 'balcony', 'fireplace', 'airConditioning', 'smartHome'],
+    featured: true,
+    createdAt: '2026-06-15T10:00:00.000Z'
+  },
+  {
+    _id: 'prop-2',
+    id: 'prop-2',
+    title: 'Skyline Penthouse Suites',
+    description: 'Ultra-luxurious triplex penthouse overlooking Central Park with private elevator, wrap-around terrace, and bespoke finishes.',
+    price: 8600000,
+    type: 'sale',
+    propertyType: 'apartment',
+    bedrooms: 3,
+    bathrooms: 3.5,
+    areaSqft: 4100,
+    address: { street: '432 Park Avenue', city: 'New York', state: 'NY', zip: '10022' },
+    location: { type: 'Point', coordinates: [-73.9712, 40.7615] },
+    lat: 40.7615,
+    lng: -73.9712,
+    images: [
+      'https://images.unsplash.com/photo-1567496898669-ee935f5f647a?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80'
+    ],
+    amenities: ['gym', 'parking', 'balcony', 'petFriendly', 'airConditioning', 'smartHome', 'security'],
+    featured: true,
+    createdAt: '2026-07-01T14:30:00.000Z'
+  },
+  {
+    _id: 'prop-3',
+    id: 'prop-3',
+    title: 'Azure Oasis Beachfront Estate',
+    description: 'Private waterfront sanctuary with direct beach access, lush tropical gardens, guest house, and private boat dock.',
+    price: 15200000,
+    type: 'sale',
+    propertyType: 'villa',
+    bedrooms: 6,
+    bathrooms: 7,
+    areaSqft: 8500,
+    address: { street: 'Palm Jumeirah Crescent', city: 'Dubai', state: 'UAE', zip: '00000' },
+    location: { type: 'Point', coordinates: [55.1381, 25.1124] },
+    lat: 25.1124,
+    lng: 55.1381,
+    images: [
+      'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80'
+    ],
+    amenities: ['pool', 'gym', 'garage', 'balcony', 'waterfront', 'garden', 'smartHome', 'security'],
+    featured: true,
+    createdAt: '2026-05-20T09:15:00.000Z'
+  },
+  {
+    _id: 'prop-4',
+    id: 'prop-4',
+    title: 'Seine River Historic Duplex',
+    description: 'Elegant Parisian residence featuring high ceilings, original moldings, chevron hardwood floors, and balcony views of Notre Dame.',
+    price: 4800000,
+    type: 'sale',
+    propertyType: 'apartment',
+    bedrooms: 2,
+    bathrooms: 2,
+    areaSqft: 2200,
+    address: { street: 'Quai de la Mégisserie', city: 'Paris', state: 'France', zip: '75001' },
+    location: { type: 'Point', coordinates: [2.3470, 48.8575] },
+    lat: 48.8575,
+    lng: 2.3470,
+    images: [
+      'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=80'
+    ],
+    amenities: ['balcony', 'fireplace', 'petFriendly', 'airConditioning'],
+    featured: true,
+    createdAt: '2026-06-28T11:00:00.000Z'
+  },
+  {
+    _id: 'prop-5',
+    id: 'prop-5',
+    title: 'Mayfair Heritage Townhouse',
+    description: 'Meticulously restored Georgian townhouse spanning 5 floors with private walled garden, wine cellar, and elevator.',
+    price: 9500000,
+    type: 'sale',
+    propertyType: 'house',
+    bedrooms: 4,
+    bathrooms: 4.5,
+    areaSqft: 4600,
+    address: { street: 'Chesterfield Hill', city: 'London', state: 'UK', zip: 'W1J 5BN' },
+    location: { type: 'Point', coordinates: [-0.1492, 51.5085] },
+    lat: 51.5085,
+    lng: -0.1492,
+    images: [
+      'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80'
+    ],
+    amenities: ['garden', 'fireplace', 'parking', 'garage', 'security'],
+    featured: true,
+    createdAt: '2026-07-10T08:45:00.000Z'
+  },
+  {
+    _id: 'prop-6',
+    id: 'prop-6',
+    title: 'Biscayne Bay Modern Mansion',
+    description: 'Waterfront architectural masterpiece on Hibiscus Island featuring 100ft of deep-water frontage, infinity dock, and rooftop lounge.',
+    price: 11200000,
+    type: 'sale',
+    propertyType: 'villa',
+    bedrooms: 5,
+    bathrooms: 5.5,
+    areaSqft: 6100,
+    address: { street: 'Hibiscus Island Dr', city: 'Miami', state: 'FL', zip: '33139' },
+    location: { type: 'Point', coordinates: [-80.1585, 25.7820] },
+    lat: 25.7820,
+    lng: -80.1585,
+    images: [
+      'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&w=1200&q=80'
+    ],
+    amenities: ['pool', 'waterfront', 'dock', 'balcony', 'garage', 'gym', 'airConditioning'],
+    featured: true,
+    createdAt: '2026-07-18T16:20:00.000Z'
+  },
+  {
+    _id: 'prop-7',
+    id: 'prop-7',
+    title: 'Beverly Hills Luxury Estate Rental',
+    description: 'Fully furnished celebrity estate available for long-term rental, complete with resort-style pool, tennis court, and screening room.',
+    price: 35000,
+    type: 'rent',
+    propertyType: 'villa',
+    bedrooms: 6,
+    bathrooms: 8,
+    areaSqft: 9200,
+    address: { street: '1100 Coldwater Canyon', city: 'Los Angeles', state: 'CA', zip: '90210' },
+    location: { type: 'Point', coordinates: [-118.4110, 34.0880] },
+    lat: 34.0880,
+    lng: -118.4110,
+    images: [
+      'https://images.unsplash.com/photo-1512915922686-57c11dde9b6b?auto=format&fit=crop&w=1200&q=80'
+    ],
+    amenities: ['pool', 'tennisCourt', 'gym', 'garage', 'security', 'smartHome'],
+    featured: false,
+    createdAt: '2026-07-12T12:00:00.000Z'
+  },
+  {
+    _id: 'prop-8',
+    id: 'prop-8',
+    title: 'Tribeca Designer Loft',
+    description: 'Authentic cast-iron building loft with exposed brick, 14ft ceilings, oversized windows, and chef grade kitchen.',
+    price: 18500,
+    type: 'rent',
+    propertyType: 'apartment',
+    bedrooms: 2,
+    bathrooms: 2,
+    areaSqft: 2800,
+    address: { street: '140 Franklin St', city: 'New York', state: 'NY', zip: '10013' },
+    location: { type: 'Point', coordinates: [-74.0080, 40.7190] },
+    lat: 40.7190,
+    lng: -74.0080,
+    images: [
+      'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1200&q=80'
+    ],
+    amenities: ['petFriendly', 'airConditioning', 'fireplace', 'balcony'],
+    featured: false,
+    createdAt: '2026-07-19T09:00:00.000Z'
+  },
+  {
+    _id: 'prop-9',
+    id: 'prop-9',
+    title: 'Financial District Executive Suite',
+    description: 'Sleek high-floor apartment with floor-to-ceiling glass and full building amenities including pool and fitness club.',
+    price: 8500,
+    type: 'rent',
+    propertyType: 'apartment',
+    bedrooms: 1,
+    bathrooms: 1.5,
+    areaSqft: 1100,
+    address: { street: '70 Pine St', city: 'New York', state: 'NY', zip: '10005' },
+    location: { type: 'Point', coordinates: [-74.0075, 40.7065] },
+    lat: 40.7065,
+    lng: -74.0075,
+    images: [
+      'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80'
+    ],
+    amenities: ['pool', 'gym', 'security', 'airConditioning'],
+    featured: false,
+    createdAt: '2026-07-21T15:00:00.000Z'
+  },
+  {
+    _id: 'prop-10',
+    id: 'prop-10',
+    title: 'Malibu Oceanfront Retreat',
+    description: 'Directly on Carbon Beach with broad teak decks, glass railings, and private steps leading to ocean sands.',
+    price: 18900000,
+    type: 'sale',
+    propertyType: 'villa',
+    bedrooms: 4,
+    bathrooms: 5,
+    areaSqft: 5200,
+    address: { street: '22108 Pacific Coast Hwy', city: 'Los Angeles', state: 'CA', zip: '90265' },
+    location: { type: 'Point', coordinates: [-118.6650, 34.0370] },
+    lat: 34.0370,
+    lng: -118.6650,
+    images: [
+      'https://images.unsplash.com/photo-1507089947368-19c1da9775ae?auto=format&fit=crop&w=1200&q=80'
+    ],
+    amenities: ['waterfront', 'balcony', 'fireplace', 'garage', 'smartHome'],
+    featured: false,
+    createdAt: '2026-07-14T11:20:00.000Z'
+  },
+  {
+    _id: 'prop-11',
+    id: 'prop-11',
+    title: 'Downtown Commercial Headquarters',
+    description: 'Prime 3-story boutique commercial space with glass storefront, open plan office layouts, and private rooftop deck.',
+    price: 6200000,
+    type: 'sale',
+    propertyType: 'commercial',
+    bedrooms: 0,
+    bathrooms: 4,
+    areaSqft: 7500,
+    address: { street: '550 S Spring St', city: 'Los Angeles', state: 'CA', zip: '90013' },
+    location: { type: 'Point', coordinates: [-118.2505, 34.0475] },
+    lat: 34.0475,
+    lng: -118.2505,
+    images: [
+      'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1200&q=80'
+    ],
+    amenities: ['parking', 'security', 'airConditioning'],
+    featured: false,
+    createdAt: '2026-06-05T10:00:00.000Z'
+  },
+  {
+    _id: 'prop-12',
+    id: 'prop-12',
+    title: 'Bel Air Residential Land Plot',
+    description: 'Rare 2-acre ocean-view development parcel in prime Bel Air, complete with fully approved architectural permits.',
+    price: 7900000,
+    type: 'sale',
+    propertyType: 'plot',
+    bedrooms: 0,
+    bathrooms: 0,
+    areaSqft: 87120,
+    address: { street: '1420 Bel Air Rd', city: 'Los Angeles', state: 'CA', zip: '90077' },
+    location: { type: 'Point', coordinates: [-118.4420, 34.0885] },
+    lat: 34.0885,
+    lng: -118.4420,
+    images: [
+      'https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1200&q=80'
+    ],
+    amenities: [],
+    featured: false,
+    createdAt: '2026-06-10T16:00:00.000Z'
+  }
+];

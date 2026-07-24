@@ -139,3 +139,82 @@ button, input, select, textarea {
 main {
   flex-grow: 1;
 }
+
+/* Animations & Keyframes */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes cardFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.stagger-card {
+  animation: cardFadeUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Leaflet Map Custom Price Markers */
+.custom-price-marker-wrapper {
+  background: transparent !important;
+  border: none !important;
+}
+
+.map-price-badge {
+  background-color: var(--dark-accent, #121824);
+  color: #ffffff;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 12px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  border: 2px solid #ffffff;
+  white-space: nowrap;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.map-price-badge.is-hovered,
+.map-price-badge:hover {
+  background-color: var(--primary, #006c6a);
+  transform: scale(1.18) translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 108, 106, 0.35);
+  z-index: 10000 !important;
+}
+
+.map-price-badge.is-selected {
+  background-color: var(--gold, #b89047);
+  transform: scale(1.2) translateY(-4px);
+  box-shadow: 0 8px 20px rgba(184, 144, 71, 0.4);
+}
+
+/* Leaflet Popup Styling Override */
+.custom-map-popup .leaflet-popup-content-wrapper {
+  padding: 0 !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2) !important;
+}
+
+.custom-map-popup .leaflet-popup-content {
+  margin: 0 !important;
+  line-height: 1.4 !important;
+}
+
+.custom-map-popup .leaflet-popup-tip {
+  background: #ffffff !important;
+}
+
