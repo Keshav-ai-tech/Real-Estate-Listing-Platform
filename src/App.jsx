@@ -15,6 +15,7 @@ export default function App() {
           <Route index element={<Home />} />
           <Route path="listings" element={<Listings />} />
           <Route path="properties/:id" element={<PropertyDetail />} />
+          <Route path="property/:id" element={<PropertyDetail />} />
           <Route path="login" element={<Login />} />
           <Route path="register" element={<Register />} />
           {/* Catch-all route redirecting to Home */}
