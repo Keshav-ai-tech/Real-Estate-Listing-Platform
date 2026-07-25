@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, Home, Heart } from 'lucide-react';
+import { Menu, X, Home, Heart, User, LogOut } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const { currentUser, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
 
   // Handle sticky background blur on scroll
@@ -19,6 +21,11 @@ export default function Navbar() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   return (
     <header style={{
@@ -74,25 +81,86 @@ export default function Navbar() {
           <Link to="/contact" className="nav-link">CONTACT US</Link>
         </nav>
 
-        {/* CTA Button */}
+        {/* Auth CTA or User Profile */}
         <div style={{ display: 'none', alignItems: 'center' }} className="desktop-nav">
-          <Link to="/login" style={{
-            backgroundColor: 'var(--primary)',
-            color: '#ffffff',
-            padding: '12px 24px',
-            borderRadius: '50px',
-            fontWeight: 600,
-            fontSize: '14px',
-            letterSpacing: '0.5px',
-            border: 'none',
-            cursor: 'pointer',
-            transition: 'background-color 0.2s ease, transform 0.1s ease'
-          }}
-          onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--primary-hover)'}
-          onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'var(--primary)'}
-          >
-            JOIN / REGISTER
-          </Link>
+          {isAuthenticated && currentUser ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '6px 14px',
+                borderRadius: '50px',
+                backgroundColor: 'var(--bg-offset, #f8fafc)',
+                border: '1px solid var(--border, #e2e8f0)'
+              }}>
+                <div style={{
+                  width: '28px',
+                  height: '28px',
+                  borderRadius: '50%',
+                  backgroundColor: 'var(--primary, #c9a063)',
+                  color: '#ffffff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '13px',
+                  fontWeight: 700
+                }}>
+                  {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U'}
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ fontSize: '13px', fontWeight: 600, lineHeight: 1.2, color: 'var(--text-dark)' }}>
+                    {currentUser.name}
+                  </span>
+                  <span style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'capitalize' }}>
+                    {currentUser.role || 'Member'}
+                  </span>
+                </div>
+              </div>
+
+              <button
+                onClick={handleLogout}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-muted)',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  padding: '6px 10px',
+                  borderRadius: '6px',
+                  transition: 'color 0.2s ease'
+                }}
+                onMouseOver={(e) => e.currentTarget.style.color = '#dc2626'}
+                onMouseOut={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
+                title="Sign Out"
+              >
+                <LogOut size={16} />
+                <span>Logout</span>
+              </button>
+            </div>
+          ) : (
+            <Link to="/login" style={{
+              backgroundColor: 'var(--primary)',
+              color: '#ffffff',
+              padding: '12px 24px',
+              borderRadius: '50px',
+              fontWeight: 600,
+              fontSize: '14px',
+              letterSpacing: '0.5px',
+              border: 'none',
+              cursor: 'pointer',
+              transition: 'background-color 0.2s ease, transform 0.1s ease'
+            }}
+            onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--primary-hover)'}
+            onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'var(--primary)'}
+            >
+              JOIN / REGISTER
+            </Link>
+          )}
         </div>
 
         {/* Mobile menu button */}
@@ -138,16 +206,43 @@ export default function Navbar() {
           </Link>
           <Link to="/contact" onClick={() => setIsOpen(false)} style={{ fontWeight: 600 }}>CONTACT US</Link>
           <hr style={{ border: 'none', borderTop: '1px solid var(--border)' }} />
-          <Link to="/login" onClick={() => setIsOpen(false)} style={{
-            backgroundColor: 'var(--primary)',
-            color: '#ffffff',
-            padding: '12px',
-            borderRadius: '50px',
-            fontWeight: 600,
-            textAlign: 'center'
-          }}>
-            JOIN / REGISTER
-          </Link>
+          
+          {isAuthenticated && currentUser ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <User size={18} style={{ color: 'var(--primary)' }} />
+                <span style={{ fontWeight: 600 }}>{currentUser.name} ({currentUser.role})</span>
+              </div>
+              <button
+                onClick={() => {
+                  setIsOpen(false);
+                  handleLogout();
+                }}
+                style={{
+                  backgroundColor: '#fef2f2',
+                  color: '#dc2626',
+                  border: '1px solid #fecaca',
+                  padding: '10px',
+                  borderRadius: '50px',
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                Sign Out
+              </button>
+            </div>
+          ) : (
+            <Link to="/login" onClick={() => setIsOpen(false)} style={{
+              backgroundColor: 'var(--primary)',
+              color: '#ffffff',
+              padding: '12px',
+              borderRadius: '50px',
+              fontWeight: 600,
+              textAlign: 'center'
+            }}>
+              JOIN / REGISTER
+            </Link>
+          )}
         </div>
       )}
 

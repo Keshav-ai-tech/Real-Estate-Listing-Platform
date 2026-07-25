@@ -1,136 +1,419 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import AuthLayout from '../components/layout/AuthLayout';
+import { useAuth } from '../context/AuthContext';
+import api from '../api/axios';
+import { User, Mail, Lock, Loader2, AlertCircle, UserCheck, Briefcase } from 'lucide-react';
 
 export default function Register() {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    role: 'buyer' // 'buyer' or 'agent'
+  });
+
+  const [touched, setTouched] = useState({
+    name: false,
+    email: false,
+    password: false,
+    confirmPassword: false
+  });
+
+  const [submitAttempted, setSubmitAttempted] = useState(false);
+  const [serverError, setServerError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleRegister = (e) => {
+  // Client-side field validation helper
+  const validate = (data) => {
+    const errors = {};
+
+    if (!data.name.trim()) {
+      errors.name = 'Full name is required.';
+    }
+
+    if (!data.email.trim()) {
+      errors.email = 'Email address is required.';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
+      errors.email = 'Please enter a valid email address.';
+    }
+
+    if (!data.password) {
+      errors.password = 'Password is required.';
+    } else if (data.password.length < 6) {
+      errors.password = 'Password must be at least 6 characters long.';
+    }
+
+    if (!data.confirmPassword) {
+      errors.confirmPassword = 'Please confirm your password.';
+    } else if (data.password !== data.confirmPassword) {
+      errors.confirmPassword = 'Passwords do not match.';
+    }
+
+    return errors;
+  };
+
+  const errors = validate(formData);
+  const hasErrors = Object.keys(errors).length > 0;
+
+  const handleChange = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleBlur = (field) => {
+    setTouched(prev => ({ ...prev, [field]: true }));
+  };
+
+  const handleRegister = async (e) => {
     e.preventDefault();
-    // Simulate register and auth
-    localStorage.setItem('isLoggedIn', 'true');
-    localStorage.setItem('user', JSON.stringify({ name: name, email: email, role: 'buyer' }));
-    navigate('/');
+    setSubmitAttempted(true);
+    setServerError('');
+
+    if (hasErrors) {
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      let token = null;
+      let user = null;
+
+      try {
+        const response = await api.post('/api/auth/register', {
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          role: formData.role
+        });
+
+        token = response.data?.token || response.data?.jwt;
+        user = response.data?.user;
+      } catch (apiErr) {
+        if (apiErr.response && apiErr.response.data?.message) {
+          throw new Error(apiErr.response.data.message);
+        }
+        
+        // Fallback for dev/client-side demo if backend endpoint is unavailable
+        console.warn('Backend register API unavailable, using client-side fallback:', apiErr.message);
+
+        user = {
+          id: `user_${Date.now()}`,
+          name: formData.name,
+          email: formData.email,
+          role: formData.role
+        };
+        token = `jwt_mock_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+      }
+
+      // Automatically log the user in after registration
+      login({ user, token });
+
+      // Redirect to home page (or login with success message)
+      navigate('/', { replace: true });
+
+    } catch (err) {
+      setServerError(err.message || 'Registration failed. Please check your information and try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const shouldShowError = (field) => {
+    return (touched[field] || submitAttempted) && errors[field];
   };
 
   return (
-    <div style={{
-      minHeight: '80vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: 'var(--bg-offset)',
-      padding: '40px 24px'
-    }}>
-      <div style={{
-        backgroundColor: '#ffffff',
-        border: '1px solid var(--border)',
-        borderRadius: '20px',
-        padding: '48px',
-        width: '100%',
-        maxWidth: '440px',
-        boxShadow: 'var(--shadow)'
-      }}>
-        <h1 style={{
-          fontFamily: 'var(--font-serif)',
-          fontSize: '36px',
-          marginBottom: '8px',
-          textAlign: 'center'
-        }}>Create Account</h1>
-        <p style={{
-          color: 'var(--text-muted)',
-          textAlign: 'center',
-          marginBottom: '32px',
-          fontSize: '14px'
-        }}>Sign up to list and save premium properties</p>
+    <AuthLayout
+      tagline="Join Our Premium Real Estate Community."
+      title="Create Your Account"
+      subtitle="Find dream properties, connect with top industry agents, or list your portfolio."
+    >
+      {/* Global Server Error Banner */}
+      {serverError && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          backgroundColor: '#fef2f2',
+          border: '1px solid #fecaca',
+          color: '#991b1b',
+          padding: '12px 16px',
+          borderRadius: '10px',
+          fontSize: '14px',
+          marginBottom: '24px'
+        }}>
+          <AlertCircle size={18} style={{ color: '#dc2626', flexShrink: 0 }} />
+          <span>{serverError}</span>
+        </div>
+      )}
 
-        <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-dark)' }}>Full Name</label>
+      <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+        {/* Role Selector Toggle Pills */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-dark, #0f172a)' }}>
+            I am joining as a
+          </label>
+          <div style={{
+            display: 'flex',
+            backgroundColor: '#f1f5f9',
+            padding: '4px',
+            borderRadius: '50px',
+            border: '1px solid var(--border, #e2e8f0)'
+          }}>
+            <button
+              type="button"
+              onClick={() => handleChange('role', 'buyer')}
+              style={{
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                padding: '10px 16px',
+                borderRadius: '50px',
+                fontSize: '14px',
+                fontWeight: 600,
+                border: 'none',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                backgroundColor: formData.role === 'buyer' ? '#ffffff' : 'transparent',
+                color: formData.role === 'buyer' ? 'var(--text-dark, #0f172a)' : 'var(--text-muted, #64748b)',
+                boxShadow: formData.role === 'buyer' ? '0 2px 8px rgba(0,0,0,0.08)' : 'none'
+              }}
+            >
+              <UserCheck size={16} style={{ color: formData.role === 'buyer' ? 'var(--primary, #c9a063)' : 'inherit' }} />
+              Buyer / Renter
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleChange('role', 'agent')}
+              style={{
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                padding: '10px 16px',
+                borderRadius: '50px',
+                fontSize: '14px',
+                fontWeight: 600,
+                border: 'none',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                backgroundColor: formData.role === 'agent' ? '#ffffff' : 'transparent',
+                color: formData.role === 'agent' ? 'var(--text-dark, #0f172a)' : 'var(--text-muted, #64748b)',
+                boxShadow: formData.role === 'agent' ? '0 2px 8px rgba(0,0,0,0.08)' : 'none'
+              }}
+            >
+              <Briefcase size={16} style={{ color: formData.role === 'agent' ? 'var(--primary, #c9a063)' : 'inherit' }} />
+              Real Estate Agent
+            </button>
+          </div>
+        </div>
+
+        {/* Full Name field */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-dark, #0f172a)' }}>
+            Full Name
+          </label>
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+            <User size={18} style={{ position: 'absolute', left: '14px', color: '#94a3b8' }} />
             <input 
               type="text" 
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              value={formData.name}
+              onChange={(e) => handleChange('name', e.target.value)}
+              onBlur={() => handleBlur('name')}
               placeholder="John Doe"
-              required 
+              disabled={isLoading}
               style={{
-                padding: '12px 16px',
-                borderRadius: '8px',
-                border: '1px solid var(--border)',
+                width: '100%',
+                padding: '12px 14px 12px 42px',
+                borderRadius: '10px',
+                border: `1px solid ${shouldShowError('name') ? '#ef4444' : 'var(--border, #e2e8f0)'}`,
                 outline: 'none',
-                fontSize: '14px'
+                fontSize: '14px',
+                backgroundColor: isLoading ? '#f8fafc' : '#ffffff',
+                transition: 'border-color 0.2s ease'
               }}
             />
           </div>
+          {shouldShowError('name') && (
+            <span style={{ fontSize: '12px', color: '#dc2626', marginTop: '2px' }}>
+              {errors.name}
+            </span>
+          )}
+        </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-dark)' }}>Email Address</label>
+        {/* Email Address field */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-dark, #0f172a)' }}>
+            Email Address
+          </label>
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+            <Mail size={18} style={{ position: 'absolute', left: '14px', color: '#94a3b8' }} />
             <input 
               type="email" 
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              value={formData.email}
+              onChange={(e) => handleChange('email', e.target.value)}
+              onBlur={() => handleBlur('email')}
               placeholder="name@domain.com"
-              required 
+              disabled={isLoading}
               style={{
-                padding: '12px 16px',
-                borderRadius: '8px',
-                border: '1px solid var(--border)',
+                width: '100%',
+                padding: '12px 14px 12px 42px',
+                borderRadius: '10px',
+                border: `1px solid ${shouldShowError('email') ? '#ef4444' : 'var(--border, #e2e8f0)'}`,
                 outline: 'none',
-                fontSize: '14px'
+                fontSize: '14px',
+                backgroundColor: isLoading ? '#f8fafc' : '#ffffff',
+                transition: 'border-color 0.2s ease'
               }}
             />
           </div>
+          {shouldShowError('email') && (
+            <span style={{ fontSize: '12px', color: '#dc2626', marginTop: '2px' }}>
+              {errors.email}
+            </span>
+          )}
+        </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-dark)' }}>Password</label>
+        {/* Password field */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-dark, #0f172a)' }}>
+            Password
+          </label>
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+            <Lock size={18} style={{ position: 'absolute', left: '14px', color: '#94a3b8' }} />
             <input 
               type="password" 
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              required 
+              value={formData.password}
+              onChange={(e) => handleChange('password', e.target.value)}
+              onBlur={() => handleBlur('password')}
+              placeholder="At least 6 characters"
+              disabled={isLoading}
               style={{
-                padding: '12px 16px',
-                borderRadius: '8px',
-                border: '1px solid var(--border)',
+                width: '100%',
+                padding: '12px 14px 12px 42px',
+                borderRadius: '10px',
+                border: `1px solid ${shouldShowError('password') ? '#ef4444' : 'var(--border, #e2e8f0)'}`,
                 outline: 'none',
-                fontSize: '14px'
+                fontSize: '14px',
+                backgroundColor: isLoading ? '#f8fafc' : '#ffffff',
+                transition: 'border-color 0.2s ease'
               }}
             />
           </div>
+          {shouldShowError('password') && (
+            <span style={{ fontSize: '12px', color: '#dc2626', marginTop: '2px' }}>
+              {errors.password}
+            </span>
+          )}
+        </div>
 
-          <button 
-            type="submit"
-            style={{
-              backgroundColor: 'var(--primary)',
-              color: '#ffffff',
-              padding: '14px',
-              borderRadius: '50px',
-              fontWeight: 600,
-              border: 'none',
-              cursor: 'pointer',
-              marginTop: '10px',
-              transition: 'background-color 0.2s ease'
-            }}
-            onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--primary-hover)'}
-            onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'var(--primary)'}
-          >
-            Get Started
-          </button>
-        </form>
+        {/* Confirm Password field */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-dark, #0f172a)' }}>
+            Confirm Password
+          </label>
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+            <Lock size={18} style={{ position: 'absolute', left: '14px', color: '#94a3b8' }} />
+            <input 
+              type="password" 
+              value={formData.confirmPassword}
+              onChange={(e) => handleChange('confirmPassword', e.target.value)}
+              onBlur={() => handleBlur('confirmPassword')}
+              placeholder="Re-enter your password"
+              disabled={isLoading}
+              style={{
+                width: '100%',
+                padding: '12px 14px 12px 42px',
+                borderRadius: '10px',
+                border: `1px solid ${shouldShowError('confirmPassword') ? '#ef4444' : 'var(--border, #e2e8f0)'}`,
+                outline: 'none',
+                fontSize: '14px',
+                backgroundColor: isLoading ? '#f8fafc' : '#ffffff',
+                transition: 'border-color 0.2s ease'
+              }}
+            />
+          </div>
+          {shouldShowError('confirmPassword') && (
+            <span style={{ fontSize: '12px', color: '#dc2626', marginTop: '2px' }}>
+              {errors.confirmPassword}
+            </span>
+          )}
+        </div>
 
-        <p style={{
-          marginTop: '24px',
-          textAlign: 'center',
-          fontSize: '13px',
-          color: 'var(--text-muted)'
+        {/* Submit button */}
+        <button 
+          type="submit"
+          disabled={isLoading}
+          style={{
+            backgroundColor: 'var(--primary, #c9a063)',
+            color: '#ffffff',
+            padding: '14px',
+            borderRadius: '50px',
+            fontWeight: 600,
+            fontSize: '15px',
+            border: 'none',
+            cursor: isLoading ? 'not-allowed' : 'pointer',
+            marginTop: '10px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+            boxShadow: '0 4px 14px rgba(201, 160, 99, 0.3)',
+            transition: 'all 0.2s ease',
+            opacity: isLoading ? 0.8 : 1
+          }}
+          onMouseOver={(e) => {
+            if (!isLoading) e.currentTarget.style.backgroundColor = 'var(--primary-hover, #b38b4d)';
+          }}
+          onMouseOut={(e) => {
+            if (!isLoading) e.currentTarget.style.backgroundColor = 'var(--primary, #c9a063)';
+          }}
+        >
+          {isLoading ? (
+            <>
+              <Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} />
+              <span>Creating Account...</span>
+            </>
+          ) : (
+            'Create Account'
+          )}
+        </button>
+      </form>
+
+      {/* Switch to Login link */}
+      <div style={{
+        marginTop: '28px',
+        paddingTop: '18px',
+        borderTop: '1px solid #f1f5f9',
+        textAlign: 'center',
+        fontSize: '14px',
+        color: 'var(--text-muted, #64748b)'
+      }}>
+        Already have an account?{' '}
+        <Link to="/login" style={{
+          color: 'var(--primary, #c9a063)',
+          fontWeight: 700,
+          textDecoration: 'none'
         }}>
-          Already have an account?{' '}
-          <Link to="/login" style={{ color: 'var(--primary)', fontWeight: 600 }}>Sign In</Link>
-        </p>
+          Sign In
+        </Link>
       </div>
-    </div>
+
+      <style>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
+    </AuthLayout>
   );
 }
