@@ -106,7 +106,7 @@ export default function Footer() {
                 <span>contact@estate.com</span>
               </div>
             </div>
-            <Link to="/#contact-form" style={{
+            <Link to="/contact" style={{
               color: 'var(--gold)',
               fontWeight: 600,
               textDecoration: 'underline',

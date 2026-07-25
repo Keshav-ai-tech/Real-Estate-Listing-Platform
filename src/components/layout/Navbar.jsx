@@ -67,12 +67,7 @@ export default function Navbar() {
               if (el) el.scrollIntoView({ behavior: 'smooth' });
             }, 100);
           }}>AGENTS</Link>
-          <Link to="/#contact" className="nav-link" onClick={() => {
-            setTimeout(() => {
-              const el = document.getElementById('contact');
-              if (el) el.scrollIntoView({ behavior: 'smooth' });
-            }, 100);
-          }}>CONTACT US</Link>
+          <Link to="/contact" className="nav-link">CONTACT US</Link>
         </nav>
 
         {/* CTA Button */}
@@ -133,7 +128,7 @@ export default function Navbar() {
           <Link to="/listings?type=sale" onClick={() => setIsOpen(false)} style={{ fontWeight: 600 }}>BUY</Link>
           <Link to="/listings?type=rent" onClick={() => setIsOpen(false)} style={{ fontWeight: 600 }}>RENT</Link>
           <Link to="/#agents" onClick={() => { setIsOpen(false); setTimeout(() => { const el = document.getElementById('agents'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }, 100); }} style={{ fontWeight: 600 }}>AGENTS</Link>
-          <Link to="/#contact" onClick={() => { setIsOpen(false); setTimeout(() => { const el = document.getElementById('contact'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }, 100); }} style={{ fontWeight: 600 }}>CONTACT US</Link>
+          <Link to="/contact" onClick={() => setIsOpen(false)} style={{ fontWeight: 600 }}>CONTACT US</Link>
           <hr style={{ border: 'none', borderTop: '1px solid var(--border)' }} />
           <Link to="/login" onClick={() => setIsOpen(false)} style={{
             backgroundColor: 'var(--primary)',
