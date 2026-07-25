@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, Home } from 'lucide-react';
+import { Menu, X, Home, Heart } from 'lucide-react';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -67,6 +67,10 @@ export default function Navbar() {
               if (el) el.scrollIntoView({ behavior: 'smooth' });
             }, 100);
           }}>AGENTS</Link>
+          <Link to="/favorites" className="nav-link" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <Heart size={14} style={{ fill: 'var(--primary)', color: 'var(--primary)' }} />
+            SAVED
+          </Link>
           <Link to="/contact" className="nav-link">CONTACT US</Link>
         </nav>
 
@@ -128,6 +132,10 @@ export default function Navbar() {
           <Link to="/listings?type=sale" onClick={() => setIsOpen(false)} style={{ fontWeight: 600 }}>BUY</Link>
           <Link to="/listings?type=rent" onClick={() => setIsOpen(false)} style={{ fontWeight: 600 }}>RENT</Link>
           <Link to="/#agents" onClick={() => { setIsOpen(false); setTimeout(() => { const el = document.getElementById('agents'); if (el) el.scrollIntoView({ behavior: 'smooth' }); }, 100); }} style={{ fontWeight: 600 }}>AGENTS</Link>
+          <Link to="/favorites" onClick={() => setIsOpen(false)} style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <Heart size={16} style={{ fill: 'var(--primary)', color: 'var(--primary)' }} />
+            SAVED HOMES
+          </Link>
           <Link to="/contact" onClick={() => setIsOpen(false)} style={{ fontWeight: 600 }}>CONTACT US</Link>
           <hr style={{ border: 'none', borderTop: '1px solid var(--border)' }} />
           <Link to="/login" onClick={() => setIsOpen(false)} style={{

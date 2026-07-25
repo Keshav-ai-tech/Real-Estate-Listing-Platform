@@ -13,6 +13,7 @@ import 'leaflet/dist/leaflet.css';
 
 import PropertyCard from '../components/property/PropertyCard';
 import { MOCK_PROPERTIES } from '../data/mockProperties';
+import { isPropertyFavorited, toggleFavorite } from '../utils/favorites';
 
 // Helper to format currency
 function formatCurrency(amount) {
@@ -220,11 +221,8 @@ export default function PropertyDetail() {
 
   // Sync favorited state when id changes
   useEffect(() => {
-    try {
-      const favs = JSON.parse(localStorage.getItem('user_favorites') || '[]');
-      setIsFavorited(Array.isArray(favs) && favs.includes(id));
-    } catch {
-      setIsFavorited(false);
+    if (id) {
+      setIsFavorited(isPropertyFavorited(id));
     }
   }, [id]);
 
@@ -379,29 +377,10 @@ export default function PropertyDetail() {
       return;
     }
 
-    const nextState = !isFavorited;
-    setIsFavorited(nextState);
-
-    // Sync localStorage
-    try {
-      let favs = JSON.parse(localStorage.getItem('user_favorites') || '[]');
-      if (nextState) {
-        if (!favs.includes(id)) favs.push(id);
-      } else {
-        favs = favs.filter((favId) => favId !== id);
-      }
-      localStorage.setItem('user_favorites', JSON.stringify(favs));
-    } catch {
-      // Ignore localStorage write error
+    if (property) {
+      const nextState = toggleFavorite(property);
+      setIsFavorited(nextState);
     }
-
-    // Call API in background
-    fetch(`/api/favorites/${id}`, {
-      method: nextState ? 'POST' : 'DELETE',
-      headers: { 'Content-Type': 'application/json' }
-    }).catch(() => {
-      // Ignore API offline failure
-    });
   };
 
   // Inquiry Form Handlers

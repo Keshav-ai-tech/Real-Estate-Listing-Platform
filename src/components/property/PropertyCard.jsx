@@ -1,11 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Heart, MapPin, Bed, Bath, Square } from 'lucide-react';
+import { isPropertyFavorited, toggleFavorite } from '../../utils/favorites';
 
-export default function PropertyCard({ property }) {
+export default function PropertyCard({ property, isFavorited: propIsFavorited, onFavoriteToggle }) {
   const navigate = useNavigate();
-  const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-  const [isFavorited, setIsFavorited] = useState(false);
+  const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true' || Boolean(localStorage.getItem('token'));
+  
+  const propertyId = property?._id || property?.id;
+  const [isFavorited, setIsFavorited] = useState(() => {
+    if (propIsFavorited !== undefined) return propIsFavorited;
+    return isPropertyFavorited(propertyId);
+  });
+
+  useEffect(() => {
+    if (propIsFavorited !== undefined) {
+      setIsFavorited(propIsFavorited);
+    } else {
+      setIsFavorited(isPropertyFavorited(propertyId));
+    }
+
+    const handleSync = () => {
+      if (propIsFavorited === undefined) {
+        setIsFavorited(isPropertyFavorited(propertyId));
+      }
+    };
+
+    window.addEventListener('favorites-updated', handleSync);
+    return () => window.removeEventListener('favorites-updated', handleSync);
+  }, [propertyId, propIsFavorited]);
 
   const handleFavoriteClick = (e) => {
     e.preventDefault(); // Stop click from bubbling to the parent Link
@@ -13,11 +36,14 @@ export default function PropertyCard({ property }) {
 
     if (!isLoggedIn) {
       navigate('/login');
-    } else {
-      // Toggle favorite state locally
-      setIsFavorited(!isFavorited);
-      // In a full implementation, we would call the favorites API here:
-      // axios.post(`/api/favorites/${property._id}`)
+      return;
+    }
+
+    const nextState = toggleFavorite(property);
+    setIsFavorited(nextState);
+
+    if (onFavoriteToggle) {
+      onFavoriteToggle(property, nextState);
     }
   };
 
@@ -37,7 +63,6 @@ export default function PropertyCard({ property }) {
     featured = true
   } = property;
 
-  const propertyId = _id || id;
   const mainImage = images[0] || 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=800&q=80';
 
   return (
