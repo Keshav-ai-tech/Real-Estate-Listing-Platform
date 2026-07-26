@@ -11,14 +11,20 @@ export default function Register() {
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'buyer' // 'buyer' or 'agent'
+    role: 'buyer', // 'buyer' or 'agent'
+    country: '',
+    city: '',
+    state: ''
   });
 
   const [touched, setTouched] = useState({
     name: false,
     email: false,
     password: false,
-    confirmPassword: false
+    confirmPassword: false,
+    country: false,
+    city: false,
+    state: false
   });
 
   const [submitAttempted, setSubmitAttempted] = useState(false);
@@ -52,6 +58,18 @@ export default function Register() {
       errors.confirmPassword = 'Please confirm your password.';
     } else if (data.password !== data.confirmPassword) {
       errors.confirmPassword = 'Passwords do not match.';
+    }
+
+    if (!data.country.trim()) {
+      errors.country = 'Country is required.';
+    }
+
+    if (!data.city.trim()) {
+      errors.city = 'City is required.';
+    }
+
+    if (!data.state.trim()) {
+      errors.state = 'State is required.';
     }
 
     return errors;
@@ -88,7 +106,10 @@ export default function Register() {
           name: formData.name,
           email: formData.email,
           password: formData.password,
-          role: formData.role
+          role: formData.role,
+          country: formData.country,
+          city: formData.city,
+          state: formData.state
         });
 
         token = response.data?.token || response.data?.jwt;
@@ -105,7 +126,10 @@ export default function Register() {
           id: `user_${Date.now()}`,
           name: formData.name,
           email: formData.email,
-          role: formData.role
+          role: formData.role,
+          country: formData.country,
+          city: formData.city,
+          state: formData.state
         };
         token = `jwt_mock_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
       }
@@ -347,6 +371,96 @@ export default function Register() {
               {errors.confirmPassword}
             </span>
           )}
+        </div>
+
+        {/* Location Fields (Country, State, City) */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-dark, #0f172a)' }}>
+              Country
+            </label>
+            <input 
+              type="text" 
+              value={formData.country}
+              onChange={(e) => handleChange('country', e.target.value)}
+              onBlur={() => handleBlur('country')}
+              placeholder="e.g. India"
+              disabled={isLoading}
+              style={{
+                width: '100%',
+                padding: '12px 14px',
+                borderRadius: '10px',
+                border: `1px solid ${shouldShowError('country') ? '#ef4444' : 'var(--border, #e2e8f0)'}`,
+                outline: 'none',
+                fontSize: '14px',
+                backgroundColor: isLoading ? '#f8fafc' : '#ffffff',
+                transition: 'border-color 0.2s ease'
+              }}
+            />
+            {shouldShowError('country') && (
+              <span style={{ fontSize: '11px', color: '#dc2626', marginTop: '2px' }}>
+                {errors.country}
+              </span>
+            )}
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-dark, #0f172a)' }}>
+              State
+            </label>
+            <input 
+              type="text" 
+              value={formData.state}
+              onChange={(e) => handleChange('state', e.target.value)}
+              onBlur={() => handleBlur('state')}
+              placeholder="e.g. Delhi"
+              disabled={isLoading}
+              style={{
+                width: '100%',
+                padding: '12px 14px',
+                borderRadius: '10px',
+                border: `1px solid ${shouldShowError('state') ? '#ef4444' : 'var(--border, #e2e8f0)'}`,
+                outline: 'none',
+                fontSize: '14px',
+                backgroundColor: isLoading ? '#f8fafc' : '#ffffff',
+                transition: 'border-color 0.2s ease'
+              }}
+            />
+            {shouldShowError('state') && (
+              <span style={{ fontSize: '11px', color: '#dc2626', marginTop: '2px' }}>
+                {errors.state}
+              </span>
+            )}
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-dark, #0f172a)' }}>
+              City
+            </label>
+            <input 
+              type="text" 
+              value={formData.city}
+              onChange={(e) => handleChange('city', e.target.value)}
+              onBlur={() => handleBlur('city')}
+              placeholder="e.g. New Delhi"
+              disabled={isLoading}
+              style={{
+                width: '100%',
+                padding: '12px 14px',
+                borderRadius: '10px',
+                border: `1px solid ${shouldShowError('city') ? '#ef4444' : 'var(--border, #e2e8f0)'}`,
+                outline: 'none',
+                fontSize: '14px',
+                backgroundColor: isLoading ? '#f8fafc' : '#ffffff',
+                transition: 'border-color 0.2s ease'
+              }}
+            />
+            {shouldShowError('city') && (
+              <span style={{ fontSize: '11px', color: '#dc2626', marginTop: '2px' }}>
+                {errors.city}
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Submit button */}

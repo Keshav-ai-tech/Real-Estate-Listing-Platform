@@ -78,6 +78,9 @@ export default function Navbar() {
             <Heart size={14} style={{ fill: 'var(--primary)', color: 'var(--primary)' }} />
             SAVED
           </Link>
+          {isAuthenticated && currentUser && currentUser.role === 'admin' && (
+            <Link to="/profile" className="nav-link">DASHBOARD</Link>
+          )}
           <Link to="/contact" className="nav-link">CONTACT US</Link>
         </nav>
 
@@ -85,15 +88,20 @@ export default function Navbar() {
         <div style={{ display: 'none', alignItems: 'center' }} className="desktop-nav">
           {isAuthenticated && currentUser ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-              <div style={{
+              <Link to="/profile" style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
                 padding: '6px 14px',
                 borderRadius: '50px',
                 backgroundColor: 'var(--bg-offset, #f8fafc)',
-                border: '1px solid var(--border, #e2e8f0)'
-              }}>
+                border: '1px solid var(--border, #e2e8f0)',
+                textDecoration: 'none',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+              className="navbar-profile-card"
+              >
                 <div style={{
                   width: '28px',
                   height: '28px',
@@ -104,9 +112,18 @@ export default function Navbar() {
                   alignItems: 'center',
                   justifyContent: 'center',
                   fontSize: '13px',
-                  fontWeight: 700
+                  fontWeight: 700,
+                  overflow: 'hidden'
                 }}>
-                  {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U'}
+                  {currentUser.photo ? (
+                    <img 
+                      src={currentUser.photo} 
+                      alt={currentUser.name} 
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                    />
+                  ) : (
+                    currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U'
+                  )}
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                   <span style={{ fontSize: '13px', fontWeight: 600, lineHeight: 1.2, color: 'var(--text-dark)' }}>
@@ -116,31 +133,7 @@ export default function Navbar() {
                     {currentUser.role || 'Member'}
                   </span>
                 </div>
-              </div>
-
-              <button
-                onClick={handleLogout}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--text-muted)',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  padding: '6px 10px',
-                  borderRadius: '6px',
-                  transition: 'color 0.2s ease'
-                }}
-                onMouseOver={(e) => e.currentTarget.style.color = '#dc2626'}
-                onMouseOut={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
-                title="Sign Out"
-              >
-                <LogOut size={16} />
-                <span>Logout</span>
-              </button>
+              </Link>
             </div>
           ) : (
             <Link to="/login" style={{
@@ -204,32 +197,18 @@ export default function Navbar() {
             <Heart size={16} style={{ fill: 'var(--primary)', color: 'var(--primary)' }} />
             SAVED HOMES
           </Link>
+          {isAuthenticated && currentUser && currentUser.role === 'admin' && (
+            <Link to="/profile" onClick={() => setIsOpen(false)} style={{ fontWeight: 600 }}>DASHBOARD</Link>
+          )}
           <Link to="/contact" onClick={() => setIsOpen(false)} style={{ fontWeight: 600 }}>CONTACT US</Link>
           <hr style={{ border: 'none', borderTop: '1px solid var(--border)' }} />
           
           {isAuthenticated && currentUser ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <Link to="/profile" onClick={() => setIsOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', color: 'inherit' }}>
                 <User size={18} style={{ color: 'var(--primary)' }} />
                 <span style={{ fontWeight: 600 }}>{currentUser.name} ({currentUser.role})</span>
-              </div>
-              <button
-                onClick={() => {
-                  setIsOpen(false);
-                  handleLogout();
-                }}
-                style={{
-                  backgroundColor: '#fef2f2',
-                  color: '#dc2626',
-                  border: '1px solid #fecaca',
-                  padding: '10px',
-                  borderRadius: '50px',
-                  fontWeight: 600,
-                  cursor: 'pointer'
-                }}
-              >
-                Sign Out
-              </button>
+              </Link>
             </div>
           ) : (
             <Link to="/login" onClick={() => setIsOpen(false)} style={{

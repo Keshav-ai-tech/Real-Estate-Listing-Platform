@@ -1,0 +1,1 @@
+// Deleted temporary check script

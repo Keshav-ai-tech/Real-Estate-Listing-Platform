@@ -5,7 +5,7 @@ import {
   ArrowLeft, ChevronLeft, ChevronRight, X, CheckCircle2, User,
   Mail, Phone, Building, Sparkles, Shield, Waves, Car, Flame,
   Wind, Trees, Dumbbell, Compass, Check, AlertCircle, Grid, Send,
-  ArrowRight, Star
+  ArrowRight, Star, FileText
 } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
@@ -14,6 +14,7 @@ import 'leaflet/dist/leaflet.css';
 import PropertyCard from '../components/property/PropertyCard';
 import { MOCK_PROPERTIES } from '../data/mockProperties';
 import { isPropertyFavorited, toggleFavorite } from '../utils/favorites';
+import { getProperty } from '../api/properties.api';
 
 // Helper to format currency
 function formatCurrency(amount) {
@@ -282,21 +283,11 @@ export default function PropertyDetail() {
   useEffect(() => {
     let isSubscribed = true;
 
-    const apiUrls = [
-      `/api/properties/${id}`,
-      `http://localhost:5000/api/properties/${id}`
-    ];
-
-    fetch(apiUrls[0])
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error('API return not OK');
-        }
-        return res.json();
-      })
-      .then((data) => {
+    // Fetch using getProperty API module
+    getProperty(id)
+      .then((resData) => {
         if (!isSubscribed) return;
-        const prop = data.data || data.property || data;
+        const prop = resData.data || resData.property || resData;
         if (!prop || (!prop._id && !prop.id)) {
           setNotFound(true);
         } else {
@@ -306,8 +297,9 @@ export default function PropertyDetail() {
         }
         setLoading(false);
       })
-      .catch(() => {
+      .catch((err) => {
         if (!isSubscribed) return;
+        console.warn('API detail fetch failed, falling back to mock properties:', err);
         // Fallback to MOCK_PROPERTIES lookup
         const foundMock = MOCK_PROPERTIES.find(
           (p) => p._id === id || p.id === id || String(p.id) === String(id)
@@ -862,6 +854,43 @@ export default function PropertyDetail() {
                 {type === 'rent' && <span style={{ fontSize: '18px', fontWeight: 500, color: 'var(--text-muted)' }}>/mo</span>}
               </div>
             </div>
+
+            {/* Property Brochure View */}
+            {property.brochureUrl && (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '16px 24px',
+                backgroundColor: 'rgba(197, 160, 89, 0.08)',
+                border: '1px solid rgba(197, 160, 89, 0.25)',
+                borderRadius: '16px',
+                marginBottom: '4px'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <FileText size={20} style={{ color: 'var(--primary)' }} />
+                  <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-dark)' }}>Property Brochure (PDF)</span>
+                </div>
+                <a 
+                  href={property.brochureUrl.startsWith('http') ? property.brochureUrl : `http://localhost:5001${property.brochureUrl}`} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  style={{
+                    backgroundColor: 'var(--primary)',
+                    color: '#ffffff',
+                    padding: '8px 18px',
+                    borderRadius: '8px',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    textDecoration: 'none',
+                    transition: 'background-color 0.2s'
+                  }}
+                  className="brochure-btn"
+                >
+                  View Brochure
+                </a>
+              </div>
+            )}
 
             {/* Specs Icon Row */}
             <div style={{

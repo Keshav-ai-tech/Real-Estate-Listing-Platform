@@ -24,7 +24,6 @@
   font-family: var(--font-sans);
   color: var(--text);
   background-color: var(--bg);
-  scroll-behavior: smooth;
 }
 
 * {

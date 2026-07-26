@@ -29,10 +29,10 @@ export default function FilterBar({
     }
   }, [debouncedSearch]);
 
-  // Sync external reset to local search input
+  // Sync external search changes to local search input
   useEffect(() => {
-    if (filters.search !== searchInput && filters.search === '') {
-      setSearchInput('');
+    if (filters.search !== searchInput) {
+      setSearchInput(filters.search || '');
     }
   }, [filters.search]);
 

@@ -54,6 +54,15 @@ export default function Home() {
   const [agents, setAgents] = useState([]);
   const [propertiesLoading, setPropertiesLoading] = useState(true);
   const [agentsLoading, setAgentsLoading] = useState(true);
+  const [cityCounts, setCityCounts] = useState({
+    'India': 0,
+    'New York': 14,
+    'Los Angeles': 8,
+    'Dubai': 12,
+    'Paris': 6,
+    'London': 10,
+    'Miami': 9
+  });
 
   // References for scrolling rows
   const citiesScrollRef = useRef(null);
@@ -61,12 +70,13 @@ export default function Home() {
 
   // Static Cities List
   const cities = [
-    { name: 'New York', image: 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?auto=format&fit=crop&w=600&q=80', count: '14 Listings' },
-    { name: 'Los Angeles', image: 'https://images.unsplash.com/photo-1507608869274-d3177c8bb4c7?auto=format&fit=crop&w=600&q=80', count: '8 Listings' },
-    { name: 'Dubai', image: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=600&q=80', count: '12 Listings' },
-    { name: 'Paris', image: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=600&q=80', count: '6 Listings' },
-    { name: 'London', image: 'https://images.unsplash.com/photo-1513635269975-59663e0ca1ad?auto=format&fit=crop&w=600&q=80', count: '10 Listings' },
-    { name: 'Miami', image: 'https://images.unsplash.com/photo-1506422748879-887454f9dbf4?auto=format&fit=crop&w=600&q=80', count: '9 Listings' },
+    { name: 'India', image: 'https://images.unsplash.com/photo-1524492412937-b28074a5d7da?auto=format&fit=crop&w=600&q=80', isCountry: true },
+    { name: 'New York', image: 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?auto=format&fit=crop&w=600&q=80' },
+    { name: 'Los Angeles', image: 'https://images.unsplash.com/photo-1507608869274-d3177c8bb4c7?auto=format&fit=crop&w=600&q=80' },
+    { name: 'Dubai', image: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=600&q=80' },
+    { name: 'Paris', image: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=600&q=80' },
+    { name: 'London', image: 'https://images.unsplash.com/photo-1505761671935-60b3a7427bad?auto=format&fit=crop&w=600&q=80' },
+    { name: 'Miami', image: 'https://images.unsplash.com/photo-1514214246283-d427a95c5d2f?auto=format&fit=crop&w=600&q=80' },
   ];
 
   // Mock Fallbacks
@@ -162,8 +172,8 @@ export default function Home() {
 
   // Fetch Data on mount
   useEffect(() => {
-    // 1. Fetch Featured Properties
-    fetch('http://localhost:5000/api/properties?featured=true&limit=6')
+    // 1. Fetch Featured Properties (relative path to utilize Vite proxy)
+    fetch('/api/properties?featured=true&limit=6')
       .then((res) => {
         if (!res.ok) throw new Error('API offline');
         return res.json();
@@ -178,8 +188,8 @@ export default function Home() {
         setPropertiesLoading(false);
       });
 
-    // 2. Fetch Agents
-    fetch('http://localhost:5000/api/agents?limit=6')
+    // 2. Fetch Agents (relative path to utilize Vite proxy)
+    fetch('/api/agents?limit=6')
       .then((res) => {
         if (!res.ok) throw new Error('API offline');
         return res.json();
@@ -193,6 +203,79 @@ export default function Home() {
         setAgents(mockAgents);
         setAgentsLoading(false);
       });
+
+    // 3. Fetch all listings to calculate dynamic city/country counts
+    fetch('/api/properties?limit=200')
+      .then((res) => {
+        if (!res.ok) throw new Error('API offline');
+        return res.json();
+      })
+      .then((data) => {
+        const list = data.data || data.properties || [];
+        const counts = {
+          'India': 0,
+          'New York': 0,
+          'Los Angeles': 0,
+          'Dubai': 0,
+          'Paris': 0,
+          'London': 0,
+          'Miami': 0
+        };
+        list.forEach((prop) => {
+          if (prop.address?.country?.toLowerCase() === 'india') {
+            counts['India'] += 1;
+          }
+          const cityName = prop.address?.city;
+          if (cityName) {
+            const matchedKey = Object.keys(counts).find(
+              (k) => k.toLowerCase() === cityName.toLowerCase()
+            );
+            if (matchedKey) {
+              counts[matchedKey] += 1;
+            }
+          }
+        });
+        setCityCounts(counts);
+      })
+      .catch(() => {
+        // Fallback: calculate from mockProperties
+        const counts = {
+          'India': 0,
+          'New York': 0,
+          'Los Angeles': 0,
+          'Dubai': 0,
+          'Paris': 0,
+          'London': 0,
+          'Miami': 0
+        };
+        mockProperties.forEach((prop) => {
+          if (prop.address?.country?.toLowerCase() === 'india') {
+            counts['India'] += 1;
+          }
+          const cityName = prop.address?.city;
+          if (cityName) {
+            const matchedKey = Object.keys(counts).find(
+              (k) => k.toLowerCase() === cityName.toLowerCase()
+            );
+            if (matchedKey) {
+              counts[matchedKey] += 1;
+            }
+          }
+        });
+        setCityCounts(counts);
+      });
+  }, []);
+
+  // Handle cross-page hash scrolls (e.g. /#agents)
+  useEffect(() => {
+    if (window.location.hash === '#agents') {
+      setTimeout(() => {
+        const el = document.getElementById('agents');
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 300);
+    }
   }, []);
 
   // Search submit handler
@@ -465,7 +548,7 @@ export default function Home() {
                 className="scroll-item" 
                 style={{ width: '280px' }}
               >
-                <Link to={`/listings?city=${encodeURIComponent(city.name)}`} style={{
+                <Link to={city.isCountry ? `/listings?country=${encodeURIComponent(city.name)}` : `/listings?city=${encodeURIComponent(city.name)}`} style={{
                   display: 'block',
                   position: 'relative',
                   height: '380px',
@@ -504,7 +587,7 @@ export default function Home() {
                       {city.name}
                     </h3>
                     <span style={{ fontSize: '13px', color: '#e2e8f0', fontWeight: 300 }}>
-                      {city.count}
+                      {`${cityCounts[city.name] || 0} ${cityCounts[city.name] === 1 ? 'Listing' : 'Listings'}`}
                     </span>
                   </div>
                 </Link>

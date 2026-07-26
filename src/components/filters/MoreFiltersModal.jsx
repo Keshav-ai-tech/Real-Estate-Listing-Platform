@@ -199,6 +199,28 @@ export default function MoreFiltersModal({
             </div>
           </div>
 
+          {/* Country filter */}
+          <div>
+            <h3 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-dark)', marginBottom: '12px' }}>
+              Country
+            </h3>
+            <input
+              type="text"
+              placeholder="e.g. United States, France"
+              value={filters.country || ''}
+              onChange={(e) => onChangeFilter('country', e.target.value)}
+              style={{
+                width: '100%',
+                padding: '10px 14px',
+                borderRadius: '8px',
+                border: '1px solid var(--border)',
+                fontSize: '14px',
+                outline: 'none',
+                color: 'var(--text-dark)'
+              }}
+            />
+          </div>
+
           {/* Amenities Checkboxes */}
           <div>
             <h3 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-dark)', marginBottom: '14px' }}>

@@ -16,6 +16,7 @@ import FilterBar from '../components/filters/FilterBar';
 import MoreFiltersModal from '../components/filters/MoreFiltersModal';
 import ListingsMap from '../components/map/ListingsMap';
 import { MOCK_PROPERTIES } from '../data/mockProperties';
+import { getProperties } from '../api/properties.api';
 
 const ITEMS_PER_PAGE = 6;
 
@@ -28,6 +29,7 @@ export default function Listings() {
     return {
       search: searchParams.get('search') || '',
       city: searchParams.get('city') || '',
+      country: searchParams.get('country') || '',
       type: searchParams.get('type') || 'all',
       propertyType: searchParams.get('propertyType') || 'all',
       minPrice: searchParams.get('minPrice') || '',
@@ -59,6 +61,7 @@ export default function Listings() {
 
     if (newFilters.search) params.set('search', newFilters.search);
     if (newFilters.city) params.set('city', newFilters.city);
+    if (newFilters.country) params.set('country', newFilters.country);
     if (newFilters.type && newFilters.type !== 'all') params.set('type', newFilters.type);
     if (newFilters.propertyType && newFilters.propertyType !== 'all') params.set('propertyType', newFilters.propertyType);
     if (newFilters.minPrice) params.set('minPrice', newFilters.minPrice);
@@ -95,53 +98,46 @@ export default function Listings() {
   useEffect(() => {
     setLoading(true);
 
-    const query = new URLSearchParams();
-    if (filters.search) query.append('search', filters.search);
-    if (filters.city) query.append('city', filters.city);
-    if (filters.type && filters.type !== 'all') query.append('type', filters.type);
-    if (filters.propertyType && filters.propertyType !== 'all') query.append('propertyType', filters.propertyType);
-    if (filters.minPrice) query.append('minPrice', filters.minPrice);
-    if (filters.maxPrice) query.append('maxPrice', filters.maxPrice);
-    if (filters.bedrooms) query.append('bedrooms', filters.bedrooms);
-    if (filters.bathrooms) query.append('bathrooms', filters.bathrooms);
-    if (filters.amenities.length > 0) query.append('amenities', filters.amenities.join(','));
-    if (filters.sort) query.append('sort', filters.sort);
-    query.append('page', String(filters.page));
-    query.append('limit', String(ITEMS_PER_PAGE));
-
-    const apiUrls = [
-      `/api/properties?${query.toString()}`,
-      `http://localhost:5000/api/properties?${query.toString()}`
-    ];
+    const params = {};
+    if (filters.search) params.search = filters.search;
+    if (filters.city) params.city = filters.city;
+    if (filters.country) params.country = filters.country;
+    if (filters.type && filters.type !== 'all') params.type = filters.type;
+    if (filters.propertyType && filters.propertyType !== 'all') params.propertyType = filters.propertyType;
+    if (filters.minPrice) params.minPrice = filters.minPrice;
+    if (filters.maxPrice) params.maxPrice = filters.maxPrice;
+    if (filters.bedrooms) params.bedrooms = filters.bedrooms;
+    if (filters.bathrooms) params.bathrooms = filters.bathrooms;
+    if (filters.amenities && filters.amenities.length > 0) params.amenities = filters.amenities.join(',');
+    if (filters.sort) params.sort = filters.sort;
+    params.page = filters.page;
+    params.limit = ITEMS_PER_PAGE;
 
     let isSubscribed = true;
 
-    // Try fetching from real API
-    fetch(apiUrls[0])
-      .then((res) => {
-        if (!res.ok) throw new Error('API return not OK');
-        return res.json();
-      })
-      .then((data) => {
+    // Try fetching from real API using Axios
+    getProperties(params)
+      .then((resData) => {
         if (isSubscribed) {
-          const list = data.data || data.properties || data;
+          const list = resData.data || resData.properties || resData;
           setProperties(Array.isArray(list) ? list : []);
-          setTotalCount(data.total || (Array.isArray(list) ? list.length : 0));
+          setTotalCount(resData.total || (Array.isArray(list) ? list.length : 0));
           setLoading(false);
         }
       })
-      .catch(() => {
+      .catch((err) => {
         // Fallback: Perform accurate client-side filtering on MOCK_PROPERTIES
         let result = [...MOCK_PROPERTIES];
 
-        // 1. Text Search (title, description, city, street)
+        // 1. Text Search (title, description, city, street, country)
         if (filters.search) {
           const q = filters.search.toLowerCase();
           result = result.filter((p) =>
             (p.title && p.title.toLowerCase().includes(q)) ||
             (p.description && p.description.toLowerCase().includes(q)) ||
             (p.address?.city && p.address.city.toLowerCase().includes(q)) ||
-            (p.address?.street && p.address.street.toLowerCase().includes(q))
+            (p.address?.street && p.address.street.toLowerCase().includes(q)) ||
+            (p.address?.country && p.address.country.toLowerCase().includes(q))
           );
         }
 
@@ -149,6 +145,12 @@ export default function Listings() {
         if (filters.city) {
           const c = filters.city.toLowerCase();
           result = result.filter((p) => p.address?.city?.toLowerCase() === c);
+        }
+
+        // 2b. Country Filter
+        if (filters.country) {
+          const c = filters.country.toLowerCase();
+          result = result.filter((p) => p.address?.country?.toLowerCase() === c);
         }
 
         // 3. Listing Type (sale / rent)
