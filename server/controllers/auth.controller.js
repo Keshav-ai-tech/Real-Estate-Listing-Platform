@@ -7,7 +7,7 @@ const Property = require('../models/Property');
 // @access  Public
 exports.register = async (req, res, next) => {
   try {
-    const { name, email, password, role, country, city, state } = req.body;
+    const { name, email, password, role, country, city, state, phone, agency, bio, yearsOfExperience } = req.body;
 
     // Check if user exists
     const userExists = await User.findOne({ email });
@@ -18,16 +18,38 @@ exports.register = async (req, res, next) => {
       });
     }
 
+    // Determine role: strictly check if 'agent'
+    const userRole = (role && role.toLowerCase() === 'agent') ? 'agent' : 'buyer';
+
     // Create user
     const user = await User.create({
       name,
       email,
       password,
-      role: role || 'buyer',
+      role: userRole,
+      phone: phone || '',
       country: country || '',
       city: city || '',
       state: state || ''
     });
+
+    let agentData = null;
+    // If registered as an agent, create their Agent profile in Agent collection
+    if (userRole === 'agent') {
+      let agent = await Agent.findOne({ email: user.email });
+      if (!agent) {
+        agent = await Agent.create({
+          name: user.name,
+          email: user.email,
+          phone: phone || user.phone || '555-0100',
+          agency: agency || 'Estate Luxury Group',
+          bio: bio || 'Licensed Real Estate Professional',
+          yearsOfExperience: yearsOfExperience ? parseInt(yearsOfExperience, 10) : 1,
+          photo: user.photo
+        });
+      }
+      agentData = agent;
+    }
 
     // Create token
     const token = user.getSignedJwtToken();
@@ -40,9 +62,14 @@ exports.register = async (req, res, next) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        phone: user.phone || '',
+        photo: user.photo || '',
         country: user.country,
         city: user.city,
-        state: user.state
+        state: user.state,
+        agency: agentData ? agentData.agency : undefined,
+        bio: agentData ? agentData.bio : undefined,
+        yearsOfExperience: agentData ? agentData.yearsOfExperience : undefined
       }
     });
   } catch (err) {
@@ -83,6 +110,24 @@ exports.login = async (req, res, next) => {
       });
     }
 
+    let agentData = null;
+    // If agent, ensure linked Agent profile exists
+    if (user.role === 'agent') {
+      let agent = await Agent.findOne({ email: user.email });
+      if (!agent) {
+        agent = await Agent.create({
+          name: user.name,
+          email: user.email,
+          phone: user.phone || '555-0100',
+          agency: 'Estate Luxury Group',
+          bio: 'Licensed Real Estate Professional',
+          yearsOfExperience: 1,
+          photo: user.photo
+        });
+      }
+      agentData = agent;
+    }
+
     // Create token
     const token = user.getSignedJwtToken();
 
@@ -94,9 +139,14 @@ exports.login = async (req, res, next) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        phone: user.phone || '',
+        photo: user.photo || '',
         country: user.country,
         city: user.city,
-        state: user.state
+        state: user.state,
+        agency: agentData ? agentData.agency : undefined,
+        bio: agentData ? agentData.bio : undefined,
+        yearsOfExperience: agentData ? agentData.yearsOfExperience : undefined
       }
     });
   } catch (err) {
@@ -121,12 +171,21 @@ exports.getMe = async (req, res, next) => {
 
     // Merge Agent details if user has agent role
     if (user.role === 'agent') {
-      const agent = await Agent.findOne({ email: user.email });
-      if (agent) {
-        userData.agency = agent.agency;
-        userData.bio = agent.bio;
-        userData.yearsOfExperience = agent.yearsOfExperience;
+      let agent = await Agent.findOne({ email: user.email });
+      if (!agent) {
+        agent = await Agent.create({
+          name: user.name,
+          email: user.email,
+          phone: user.phone || '555-0100',
+          agency: 'Estate Luxury Group',
+          bio: 'Licensed Real Estate Professional',
+          yearsOfExperience: 1,
+          photo: user.photo
+        });
       }
+      userData.agency = agent.agency;
+      userData.bio = agent.bio;
+      userData.yearsOfExperience = agent.yearsOfExperience;
     }
 
     res.status(200).json({
@@ -158,6 +217,11 @@ exports.updateDetails = async (req, res, next) => {
     user.email = req.body.email || user.email;
     user.phone = req.body.phone !== undefined ? req.body.phone : user.phone;
 
+    // Allow upgrading role if requested (e.g. buyer -> agent)
+    if (req.body.role && (req.body.role === 'agent' || req.body.role === 'buyer')) {
+      user.role = req.body.role;
+    }
+
     // Set avatar photo URL if uploaded via Multer
     if (req.file) {
       user.photo = req.file.path || `/uploads/${req.file.filename}`;
@@ -168,6 +232,7 @@ exports.updateDetails = async (req, res, next) => {
     await user.save();
 
     // Sync Agent profile in parallel if user has agent role
+    let agentData = null;
     if (user.role === 'agent') {
       let agent = await Agent.findOne({ email: oldEmail });
       if (!agent) {
@@ -187,11 +252,19 @@ exports.updateDetails = async (req, res, next) => {
       agent.yearsOfExperience = req.body.yearsOfExperience !== undefined ? parseInt(req.body.yearsOfExperience, 10) : agent.yearsOfExperience;
       
       await agent.save();
+      agentData = agent;
+    }
+
+    let returnData = user.toObject();
+    if (agentData) {
+      returnData.agency = agentData.agency;
+      returnData.bio = agentData.bio;
+      returnData.yearsOfExperience = agentData.yearsOfExperience;
     }
 
     res.status(200).json({
       success: true,
-      data: user
+      data: returnData
     });
   } catch (err) {
     next(err);

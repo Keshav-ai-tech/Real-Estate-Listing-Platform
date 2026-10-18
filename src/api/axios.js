@@ -29,12 +29,22 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    // Only auto-redirect on 401 if a token was sent and failed (expired/invalid token),
+    // and don't redirect when already on login, register, or public discovery pages
     if (error.response && error.response.status === 401) {
-      localStorage.removeItem('isLoggedIn');
-      localStorage.removeItem('token');
-      localStorage.removeItem('authToken');
-      if (window.location.pathname !== '/login') {
-        window.location.href = '/login';
+      const hadToken = Boolean(localStorage.getItem('token') || localStorage.getItem('authToken'));
+      if (hadToken && error.config && error.config.headers && error.config.headers.Authorization) {
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('token');
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('user');
+        localStorage.removeItem('userRole');
+        localStorage.removeItem('userName');
+        localStorage.removeItem('userEmail');
+        
+        if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+          window.location.href = '/login';
+        }
       }
     }
     return Promise.reject(error);

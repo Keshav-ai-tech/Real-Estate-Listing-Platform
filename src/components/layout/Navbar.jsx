@@ -78,8 +78,10 @@ export default function Navbar() {
             <Heart size={14} style={{ fill: 'var(--primary)', color: 'var(--primary)' }} />
             SAVED
           </Link>
-          {isAuthenticated && currentUser && currentUser.role === 'admin' && (
-            <Link to="/profile" className="nav-link">DASHBOARD</Link>
+          {isAuthenticated && currentUser && (currentUser.role === 'agent' || currentUser.role === 'admin') && (
+            <Link to="/dashboard" className="nav-link" style={{ color: 'var(--primary)', fontWeight: 700 }}>
+              AGENT DASHBOARD
+            </Link>
           )}
           <Link to="/contact" className="nav-link">CONTACT US</Link>
         </nav>
@@ -88,25 +90,27 @@ export default function Navbar() {
         <div style={{ display: 'none', alignItems: 'center' }} className="desktop-nav">
           {isAuthenticated && currentUser ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-              <Link to="/profile" style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '6px 14px',
-                borderRadius: '50px',
-                backgroundColor: 'var(--bg-offset, #f8fafc)',
-                border: '1px solid var(--border, #e2e8f0)',
-                textDecoration: 'none',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
-              }}
-              className="navbar-profile-card"
+              <Link 
+                to={currentUser.role === 'agent' ? '/dashboard' : '/profile'} 
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '6px 14px',
+                  borderRadius: '50px',
+                  backgroundColor: 'var(--bg-offset, #f8fafc)',
+                  border: `1px solid ${currentUser.role === 'agent' ? 'rgba(201, 160, 99, 0.4)' : 'var(--border, #e2e8f0)'}`,
+                  textDecoration: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+                className="navbar-profile-card"
               >
                 <div style={{
                   width: '28px',
                   height: '28px',
                   borderRadius: '50%',
-                  backgroundColor: 'var(--primary, #c9a063)',
+                  backgroundColor: currentUser.role === 'agent' ? '#10b981' : 'var(--primary, #c9a063)',
                   color: '#ffffff',
                   display: 'flex',
                   alignItems: 'center',
@@ -129,8 +133,14 @@ export default function Navbar() {
                   <span style={{ fontSize: '13px', fontWeight: 600, lineHeight: 1.2, color: 'var(--text-dark)' }}>
                     {currentUser.name}
                   </span>
-                  <span style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'capitalize' }}>
-                    {currentUser.role || 'Member'}
+                  <span style={{ 
+                    fontSize: '10px', 
+                    fontWeight: 700,
+                    color: currentUser.role === 'agent' ? '#059669' : 'var(--text-muted)', 
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px'
+                  }}>
+                    {currentUser.role === 'agent' ? '★ Agent' : 'Buyer'}
                   </span>
                 </div>
               </Link>
@@ -197,17 +207,21 @@ export default function Navbar() {
             <Heart size={16} style={{ fill: 'var(--primary)', color: 'var(--primary)' }} />
             SAVED HOMES
           </Link>
-          {isAuthenticated && currentUser && currentUser.role === 'admin' && (
-            <Link to="/profile" onClick={() => setIsOpen(false)} style={{ fontWeight: 600 }}>DASHBOARD</Link>
+          {isAuthenticated && currentUser && (currentUser.role === 'agent' || currentUser.role === 'admin') && (
+            <Link to="/dashboard" onClick={() => setIsOpen(false)} style={{ fontWeight: 700, color: 'var(--primary)' }}>
+              AGENT DASHBOARD
+            </Link>
           )}
           <Link to="/contact" onClick={() => setIsOpen(false)} style={{ fontWeight: 600 }}>CONTACT US</Link>
           <hr style={{ border: 'none', borderTop: '1px solid var(--border)' }} />
           
           {isAuthenticated && currentUser ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <Link to="/profile" onClick={() => setIsOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', color: 'inherit' }}>
-                <User size={18} style={{ color: 'var(--primary)' }} />
-                <span style={{ fontWeight: 600 }}>{currentUser.name} ({currentUser.role})</span>
+              <Link to={currentUser.role === 'agent' ? '/dashboard' : '/profile'} onClick={() => setIsOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', color: 'inherit' }}>
+                <User size={18} style={{ color: currentUser.role === 'agent' ? '#10b981' : 'var(--primary)' }} />
+                <span style={{ fontWeight: 600 }}>
+                  {currentUser.name} ({currentUser.role === 'agent' ? 'Agent Account' : 'Buyer Account'})
+                </span>
               </Link>
             </div>
           ) : (

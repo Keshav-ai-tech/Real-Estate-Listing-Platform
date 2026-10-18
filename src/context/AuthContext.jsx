@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import api from '../api/axios';
 
 const AuthContext = createContext(null);
 
@@ -27,6 +28,29 @@ export function AuthProvider({ children }) {
     }
   }, [token]);
 
+  // Synchronize authenticated user profile with backend on mount/token change
+  useEffect(() => {
+    if (!token) return;
+
+    let isMounted = true;
+    api.get('/api/auth/me')
+      .then(res => {
+        if (isMounted && res.data?.data) {
+          const freshUser = res.data.data;
+          setCurrentUser(freshUser);
+          localStorage.setItem('user', JSON.stringify(freshUser));
+          localStorage.setItem('userRole', freshUser.role || 'buyer');
+          localStorage.setItem('userName', freshUser.name || '');
+          localStorage.setItem('userEmail', freshUser.email || '');
+        }
+      })
+      .catch(err => {
+        // Silently catch network errors in offline/dev mode
+      });
+
+    return () => { isMounted = false; };
+  }, [token]);
+
   const login = ({ user, token: authToken }) => {
     const finalToken = authToken || `jwt_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
     const finalUser = user || { name: 'User', email: 'user@example.com', role: 'buyer' };
@@ -34,6 +58,9 @@ export function AuthProvider({ children }) {
     localStorage.setItem('token', finalToken);
     localStorage.setItem('authToken', finalToken);
     localStorage.setItem('user', JSON.stringify(finalUser));
+    localStorage.setItem('userRole', finalUser.role || 'buyer');
+    localStorage.setItem('userName', finalUser.name || '');
+    localStorage.setItem('userEmail', finalUser.email || '');
     localStorage.setItem('isLoggedIn', 'true');
 
     setToken(finalToken);
@@ -44,6 +71,9 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('token');
     localStorage.removeItem('authToken');
     localStorage.removeItem('user');
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('userName');
+    localStorage.removeItem('userEmail');
     localStorage.removeItem('isLoggedIn');
     setToken(null);
     setCurrentUser(null);
@@ -53,6 +83,9 @@ export function AuthProvider({ children }) {
     setCurrentUser(prev => {
       const newObj = { ...prev, ...updatedFields };
       localStorage.setItem('user', JSON.stringify(newObj));
+      if (newObj.role) localStorage.setItem('userRole', newObj.role);
+      if (newObj.name) localStorage.setItem('userName', newObj.name);
+      if (newObj.email) localStorage.setItem('userEmail', newObj.email);
       return newObj;
     });
   };

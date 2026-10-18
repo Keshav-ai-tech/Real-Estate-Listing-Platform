@@ -10,7 +10,6 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Contact from './pages/Contact';
 import Favorites from './pages/Favorites';
-import AgentDashboard from './pages/AgentDashboard';
 import Profile from './pages/Profile';
 import ScrollToTop from './components/common/ScrollToTop';
 

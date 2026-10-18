@@ -17,7 +17,7 @@ export default function Login() {
 
   // Get success message if redirected from registration or previous route
   const successMessage = location.state?.message || '';
-  const fromPath = location.state?.from?.pathname || '/';
+  const fromPath = location.state?.from?.pathname || '';
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -29,42 +29,57 @@ export default function Login() {
       let user = null;
 
       try {
-        const response = await api.post('/api/auth/login', { email, password });
+        const response = await api.post('/api/auth/login', { 
+          email: email.trim(), 
+          password 
+        });
         token = response.data?.token || response.data?.jwt;
         user = response.data?.user;
       } catch (apiErr) {
-        // Handle specific server error responses (e.g. 401 Invalid Credentials)
-        if (apiErr.response && apiErr.response.status === 401) {
-          throw new Error(apiErr.response.data?.message || 'Invalid email or password.');
-        } else if (apiErr.response && apiErr.response.data?.message) {
-          throw new Error(apiErr.response.data.message);
+        // Handle server error responses (e.g. 401 Invalid Credentials, 400 Bad Request)
+        if (apiErr.response) {
+          const errMsg = apiErr.response.data?.error || apiErr.response.data?.message || 'Invalid email or password.';
+          throw new Error(errMsg);
         }
         
-        // If backend endpoint is offline or returned 404/500, fallback for client demo:
-        console.warn('Backend API unavailable, using client-side auth fallback:', apiErr.message);
+        // If backend server is completely offline, check local demo registry
+        console.warn('Backend API unavailable, checking local demo accounts registry:', apiErr.message);
         
-        // Basic validation for demo fallback
-        if (email.toLowerCase() === 'error@test.com' || password === 'wrong') {
+        const registeredUsers = JSON.parse(localStorage.getItem('estate_registered_users') || '[]');
+        const matched = registeredUsers.find(u => u.email?.toLowerCase() === email.trim().toLowerCase());
+        
+        if (matched) {
+          if (matched.password && matched.password !== password) {
+            throw new Error('Invalid email or password.');
+          }
+          user = { ...matched };
+          delete user.password;
+          token = `jwt_mock_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+        } else {
+          // If not in local demo registry either
           throw new Error('Invalid email or password.');
         }
-
-        const nameFromEmail = email.split('@')[0];
-        const formattedName = nameFromEmail.charAt(0).toUpperCase() + nameFromEmail.slice(1);
-        
-        user = {
-          id: 'user_123',
-          name: formattedName || 'Jane Doe',
-          email: email,
-          role: email.includes('agent') ? 'agent' : 'buyer'
-        };
-        token = `jwt_mock_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
       }
 
-      // Store in AuthContext & LocalStorage
+      if (!user) {
+        throw new Error('Login failed: user profile not found.');
+      }
+
+      // Store in AuthContext & LocalStorage with verified role
       login({ user, token });
 
-      // Redirect to target path or home
-      navigate(fromPath, { replace: true });
+      // Precise role-based redirect:
+      // If user came from a specific page (e.g., detail page, favorites), respect it.
+      // Otherwise:
+      // - Agent account -> redirect directly to Agent Dashboard (/dashboard)
+      // - Buyer account -> redirect to Home (/) or target path
+      if (fromPath && fromPath !== '/login' && fromPath !== '/') {
+        navigate(fromPath, { replace: true });
+      } else if (user.role === 'agent') {
+        navigate('/dashboard', { replace: true });
+      } else {
+        navigate('/', { replace: true });
+      }
 
     } catch (err) {
       setErrorMessage(err.message || 'Login failed. Please check your credentials.');

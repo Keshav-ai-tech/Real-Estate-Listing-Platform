@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import AuthLayout from '../components/layout/AuthLayout';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
-import { User, Mail, Lock, Loader2, AlertCircle, UserCheck, Briefcase } from 'lucide-react';
+import { User, Mail, Lock, Loader2, AlertCircle, UserCheck, Briefcase, Phone, Building2 } from 'lucide-react';
 
 export default function Register() {
   const [formData, setFormData] = useState({
@@ -12,6 +12,8 @@ export default function Register() {
     password: '',
     confirmPassword: '',
     role: 'buyer', // 'buyer' or 'agent'
+    phone: '',
+    agency: '',
     country: '',
     city: '',
     state: ''
@@ -22,6 +24,8 @@ export default function Register() {
     email: false,
     password: false,
     confirmPassword: false,
+    phone: false,
+    agency: false,
     country: false,
     city: false,
     state: false
@@ -58,6 +62,12 @@ export default function Register() {
       errors.confirmPassword = 'Please confirm your password.';
     } else if (data.password !== data.confirmPassword) {
       errors.confirmPassword = 'Passwords do not match.';
+    }
+
+    if (data.role === 'agent') {
+      if (!data.phone.trim()) {
+        errors.phone = 'Phone number is required for agent accounts.';
+      }
     }
 
     if (!data.country.trim()) {
@@ -103,42 +113,60 @@ export default function Register() {
 
       try {
         const response = await api.post('/api/auth/register', {
-          name: formData.name,
-          email: formData.email,
+          name: formData.name.trim(),
+          email: formData.email.trim(),
           password: formData.password,
-          role: formData.role,
-          country: formData.country,
-          city: formData.city,
-          state: formData.state
+          role: formData.role, // 'buyer' or 'agent'
+          phone: formData.phone.trim(),
+          agency: formData.agency.trim() || (formData.role === 'agent' ? 'Estate Luxury Group' : ''),
+          country: formData.country.trim(),
+          city: formData.city.trim(),
+          state: formData.state.trim()
         });
 
         token = response.data?.token || response.data?.jwt;
         user = response.data?.user;
       } catch (apiErr) {
-        if (apiErr.response && apiErr.response.data?.message) {
-          throw new Error(apiErr.response.data.message);
+        if (apiErr.response) {
+          const errMsg = apiErr.response.data?.error || apiErr.response.data?.message || 'Registration failed on server.';
+          throw new Error(errMsg);
         }
         
-        // Fallback for dev/client-side demo if backend endpoint is unavailable
+        // Fallback for dev/client-side demo ONLY if backend server is unreachable
         console.warn('Backend register API unavailable, using client-side fallback:', apiErr.message);
 
         user = {
           id: `user_${Date.now()}`,
-          name: formData.name,
-          email: formData.email,
-          role: formData.role,
-          country: formData.country,
-          city: formData.city,
-          state: formData.state
+          name: formData.name.trim(),
+          email: formData.email.trim(),
+          role: formData.role, // Preserve selected role
+          phone: formData.phone.trim(),
+          agency: formData.agency.trim() || (formData.role === 'agent' ? 'Estate Luxury Group' : ''),
+          country: formData.country.trim(),
+          city: formData.city.trim(),
+          state: formData.state.trim()
         };
         token = `jwt_mock_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+
+        // Save into local demo users registry
+        const registeredUsers = JSON.parse(localStorage.getItem('estate_registered_users') || '[]');
+        const updated = registeredUsers.filter(u => u.email?.toLowerCase() !== user.email.toLowerCase());
+        updated.push({
+          ...user,
+          password: formData.password
+        });
+        localStorage.setItem('estate_registered_users', JSON.stringify(updated));
       }
 
-      // Automatically log the user in after registration
+      // Automatically log the user in with their explicit registered role
       login({ user, token });
 
-      // Redirect to home page (or login with success message)
-      navigate('/', { replace: true });
+      // Role-specific immediate routing
+      if (user.role === 'agent') {
+        navigate('/dashboard', { replace: true });
+      } else {
+        navigate('/', { replace: true });
+      }
 
     } catch (err) {
       setServerError(err.message || 'Registration failed. Please check your information and try again.');
@@ -240,6 +268,86 @@ export default function Register() {
             </button>
           </div>
         </div>
+
+        {/* Role Helper Banner */}
+        <div style={{
+          backgroundColor: formData.role === 'agent' ? 'rgba(201, 160, 99, 0.08)' : 'rgba(59, 130, 246, 0.06)',
+          border: `1px solid ${formData.role === 'agent' ? 'rgba(201, 160, 99, 0.25)' : 'rgba(59, 130, 246, 0.2)'}`,
+          padding: '10px 14px',
+          borderRadius: '10px',
+          fontSize: '13px',
+          color: formData.role === 'agent' ? '#92400e' : '#1e40af',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px'
+        }}>
+          {formData.role === 'agent' ? (
+            <span>🏢 <strong>Agent Account:</strong> Sell properties, manage listings portfolio, and handle buyer inquiries.</span>
+          ) : (
+            <span>🏡 <strong>Buyer Account:</strong> Browse luxury listings, save favorites, and contact sellers.</span>
+          )}
+        </div>
+
+        {/* Optional Agency Name & Phone for Agents */}
+        {formData.role === 'agent' && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-dark, #0f172a)' }}>
+                Agency / Brokerage
+              </label>
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                <Building2 size={18} style={{ position: 'absolute', left: '14px', color: '#94a3b8' }} />
+                <input 
+                  type="text" 
+                  value={formData.agency}
+                  onChange={(e) => handleChange('agency', e.target.value)}
+                  placeholder="e.g. Luxury Realty"
+                  disabled={isLoading}
+                  style={{
+                    width: '100%',
+                    padding: '12px 14px 12px 42px',
+                    borderRadius: '10px',
+                    border: '1px solid var(--border, #e2e8f0)',
+                    outline: 'none',
+                    fontSize: '14px',
+                    backgroundColor: isLoading ? '#f8fafc' : '#ffffff'
+                  }}
+                />
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-dark, #0f172a)' }}>
+                Direct Phone <span style={{ color: '#dc2626' }}>*</span>
+              </label>
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                <Phone size={18} style={{ position: 'absolute', left: '14px', color: '#94a3b8' }} />
+                <input 
+                  type="tel" 
+                  value={formData.phone}
+                  onChange={(e) => handleChange('phone', e.target.value)}
+                  onBlur={() => handleBlur('phone')}
+                  placeholder="e.g. 555-0199"
+                  disabled={isLoading}
+                  style={{
+                    width: '100%',
+                    padding: '12px 14px 12px 42px',
+                    borderRadius: '10px',
+                    border: `1px solid ${shouldShowError('phone') ? '#ef4444' : 'var(--border, #e2e8f0)'}`,
+                    outline: 'none',
+                    fontSize: '14px',
+                    backgroundColor: isLoading ? '#f8fafc' : '#ffffff'
+                  }}
+                />
+              </div>
+              {shouldShowError('phone') && (
+                <span style={{ fontSize: '11px', color: '#dc2626', marginTop: '2px' }}>
+                  {errors.phone}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Full Name field */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>

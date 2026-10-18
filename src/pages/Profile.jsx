@@ -30,8 +30,15 @@ export default function Profile() {
   const navigate = useNavigate();
   const { currentUser, isAuthenticated, updateUser, logout } = useAuth();
   
-  // Dashboard & Navigation tab state
-  const [activeTab, setActiveTab] = useState('info');
+  const isAgent = currentUser?.role === 'agent' || localStorage.getItem('userRole') === 'agent';
+
+  // Dashboard & Navigation tab state: default to 'listings' for agents or /dashboard route
+  const [activeTab, setActiveTab] = useState(() => {
+    if (window.location.pathname.includes('dashboard') || isAgent) {
+      return 'listings';
+    }
+    return 'info';
+  });
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
 
@@ -108,6 +115,13 @@ export default function Profile() {
       
       if (currentUser.role === 'agent') {
         fetchAgentData();
+        if (window.location.pathname.includes('dashboard') || activeTab === 'searches') {
+          setActiveTab('listings');
+        }
+      } else if (currentUser.role === 'buyer') {
+        if (activeTab === 'listings' || activeTab === 'inquiries') {
+          setActiveTab('info');
+        }
       }
     }
   }, [currentUser, isAuthenticated, navigate]);
@@ -508,7 +522,26 @@ export default function Profile() {
     }
   };
 
-  const isAgent = currentUser?.role === 'agent';
+  const handleUpgradeToAgent = async () => {
+    if (!window.confirm('Would you like to upgrade your account to an Agent Account? This will enable you to list properties, manage your portfolio, and receive buyer inquiries.')) {
+      return;
+    }
+    setLoading(true);
+    try {
+      const response = await api.put('/api/auth/updatedetails', { role: 'agent' });
+      if (response.data && response.data.success) {
+        updateUser(response.data.data);
+        showToast('Account successfully upgraded to Agent Account! Welcome aboard.', 'success');
+        setActiveTab('listings');
+        fetchAgentData();
+      }
+    } catch (err) {
+      const errMsg = err.response?.data?.error || err.message || 'Upgrade failed. Please try again.';
+      showToast(errMsg, 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div style={{
@@ -561,8 +594,8 @@ export default function Profile() {
               width: '44px',
               height: '44px',
               borderRadius: '50%',
-              backgroundColor: 'rgba(197, 160, 89, 0.15)',
-              color: 'var(--primary)',
+              backgroundColor: isAgent ? 'rgba(16, 185, 129, 0.15)' : 'rgba(197, 160, 89, 0.15)',
+              color: isAgent ? '#059669' : 'var(--primary)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -575,9 +608,23 @@ export default function Profile() {
                 currentUser?.name ? currentUser.name.charAt(0).toUpperCase() : 'U'
               )}
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
               <span style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-dark)' }}>{currentUser?.name}</span>
-              <span style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'capitalize' }}>{currentUser?.role} Account</span>
+              <span style={{ 
+                fontSize: '11px', 
+                fontWeight: 700,
+                color: isAgent ? '#059669' : '#2563eb',
+                backgroundColor: isAgent ? 'rgba(16, 185, 129, 0.12)' : 'rgba(37, 99, 235, 0.08)',
+                padding: '2px 8px',
+                borderRadius: '20px',
+                width: 'fit-content',
+                letterSpacing: '0.3px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}>
+                {isAgent ? '★ Real Estate Agent' : '👤 Buyer Account'}
+              </span>
             </div>
           </div>
 
@@ -602,32 +649,72 @@ export default function Profile() {
             }}
           >
             <User size={18} />
-            <span>Profile Info</span>
+            <span>{isAgent ? 'Agent Profile' : 'Profile Info'}</span>
           </button>
 
           {!isAgent ? (
-            <button
-              onClick={() => setActiveTab('searches')}
-              style={{
+            <>
+              <button
+                onClick={() => setActiveTab('searches')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  width: '100%',
+                  padding: '12px 16px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  background: activeTab === 'searches' ? 'rgba(197, 160, 89, 0.1)' : 'transparent',
+                  color: activeTab === 'searches' ? 'var(--primary)' : 'var(--text)',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <Search size={18} />
+                <span>Saved Searches</span>
+              </button>
+
+              {/* Upgrade to Seller / Agent Prompt Card */}
+              <div style={{
+                marginTop: '12px',
+                padding: '14px',
+                borderRadius: '12px',
+                backgroundColor: 'rgba(201, 160, 99, 0.08)',
+                border: '1px solid rgba(201, 160, 99, 0.25)',
                 display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                width: '100%',
-                padding: '12px 16px',
-                borderRadius: '10px',
-                border: 'none',
-                background: activeTab === 'searches' ? 'rgba(197, 160, 89, 0.1)' : 'transparent',
-                color: activeTab === 'searches' ? 'var(--primary)' : 'var(--text)',
-                fontSize: '14px',
-                fontWeight: 600,
-                cursor: 'pointer',
-                textAlign: 'left',
-                transition: 'all 0.2s ease'
-              }}
-            >
-              <Search size={18} />
-              <span>Saved Searches</span>
-            </button>
+                flexDirection: 'column',
+                gap: '8px'
+              }}>
+                <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-dark)' }}>
+                  Want to sell properties?
+                </span>
+                <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: 0, lineHeight: 1.4 }}>
+                  Switch to an agent account to list homes and connect directly with buyers.
+                </p>
+                <button
+                  type="button"
+                  onClick={handleUpgradeToAgent}
+                  disabled={loading}
+                  style={{
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    backgroundColor: 'var(--primary, #c9a063)',
+                    color: '#ffffff',
+                    border: 'none',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    marginTop: '4px',
+                    transition: 'opacity 0.2s'
+                  }}
+                >
+                  Become an Agent
+                </button>
+              </div>
+            </>
           ) : (
             <>
               <button
@@ -635,7 +722,7 @@ export default function Profile() {
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '12px',
+                  justifyContent: 'space-between',
                   width: '100%',
                   padding: '12px 16px',
                   borderRadius: '10px',
@@ -649,15 +736,29 @@ export default function Profile() {
                   transition: 'all 0.2s ease'
                 }}
               >
-                <Building2 size={18} />
-                <span>My Listings</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <Building2 size={18} />
+                  <span>My Listings</span>
+                </div>
+                {properties.length > 0 && (
+                  <span style={{
+                    fontSize: '11px',
+                    backgroundColor: activeTab === 'listings' ? 'var(--primary)' : '#e2e8f0',
+                    color: activeTab === 'listings' ? '#ffffff' : '#475569',
+                    padding: '2px 8px',
+                    borderRadius: '50px',
+                    fontWeight: 700
+                  }}>
+                    {properties.length}
+                  </span>
+                )}
               </button>
               <button
                 onClick={() => setActiveTab('inquiries')}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '12px',
+                  justifyContent: 'space-between',
                   width: '100%',
                   padding: '12px 16px',
                   borderRadius: '10px',
@@ -671,8 +772,22 @@ export default function Profile() {
                   transition: 'all 0.2s ease'
                 }}
               >
-                <MessageSquare size={18} />
-                <span>Inquiries Received</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <MessageSquare size={18} />
+                  <span>Inquiries Received</span>
+                </div>
+                {inquiries.length > 0 && (
+                  <span style={{
+                    fontSize: '11px',
+                    backgroundColor: '#10b981',
+                    color: '#ffffff',
+                    padding: '2px 8px',
+                    borderRadius: '50px',
+                    fontWeight: 700
+                  }}>
+                    {inquiries.length}
+                  </span>
+                )}
               </button>
             </>
           )}
