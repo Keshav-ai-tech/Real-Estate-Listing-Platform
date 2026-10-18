@@ -126,8 +126,25 @@ export default function Profile() {
     }
   }, [currentUser, isAuthenticated, navigate]);
 
+  const getSafeError = (err, fallback = 'An error occurred') => {
+    if (!err) return fallback;
+    if (typeof err === 'string') return err;
+    if (err.response?.data) {
+      const d = err.response.data;
+      if (typeof d === 'string') return d;
+      if (typeof d.error === 'string') return d.error;
+      if (d.error && typeof d.error.message === 'string') return d.error.message;
+      if (typeof d.message === 'string') return d.message;
+    }
+    if (err.message && typeof err.message === 'string' && err.message !== '[object Object]') {
+      return err.message;
+    }
+    return fallback;
+  };
+
   const showToast = (message, type = 'success') => {
-    setToast({ message, type });
+    const finalMsg = typeof message === 'string' ? message : getSafeError(message);
+    setToast({ message: finalMsg, type });
     setTimeout(() => setToast(null), 3000);
   };
 
@@ -252,7 +269,7 @@ export default function Profile() {
         confirmPassword: ''
       });
     } catch (err) {
-      const errMsg = err.response?.data?.error || 'Password update failed. Verify current password.';
+      const errMsg = getSafeError(err, 'Password update failed. Verify current password.');
       setPassError(errMsg);
     } finally {
       setLoading(false);
@@ -269,7 +286,7 @@ export default function Profile() {
       await api.delete('/api/auth/me');
       handleLogout();
     } catch (err) {
-      const errMsg = err.response?.data?.error || 'Account deletion failed.';
+      const errMsg = getSafeError(err, 'Account deletion failed.');
       showToast(errMsg, 'error');
     } finally {
       setLoading(false);
@@ -502,7 +519,7 @@ export default function Profile() {
       }, 1500);
     } catch (err) {
       console.error('API error creating property:', err);
-      const errMsg = err.response?.data?.error || err.response?.data?.message || err.message || 'Failed to create property listing';
+      const errMsg = getSafeError(err, 'Failed to create property listing');
       showToast(errMsg, 'error');
     } finally {
       setLoading(false);
@@ -517,7 +534,7 @@ export default function Profile() {
       showToast('Listing deleted successfully');
     } catch (err) {
       console.error('API delete failed:', err);
-      const errMsg = err.response?.data?.error || err.response?.data?.message || err.message || 'Failed to delete listing';
+      const errMsg = getSafeError(err, 'Failed to delete listing');
       showToast(errMsg, 'error');
     }
   };
@@ -536,7 +553,7 @@ export default function Profile() {
         fetchAgentData();
       }
     } catch (err) {
-      const errMsg = err.response?.data?.error || err.message || 'Upgrade failed. Please try again.';
+      const errMsg = getSafeError(err, 'Upgrade failed. Please try again.');
       showToast(errMsg, 'error');
     } finally {
       setLoading(false);

@@ -17,7 +17,8 @@ export default function useProperties(filters = {}) {
         setProperties(result.data || []);
         setTotal(result.total || result.count || 0);
       } else {
-        throw new Error(result?.error || 'Failed to fetch properties');
+        const errString = typeof result?.error === 'string' ? result.error : (result?.error?.message || 'Failed to fetch properties');
+        throw new Error(errString);
       }
     } catch (err) {
       console.warn('API error, falling back to local mock data: ', err);

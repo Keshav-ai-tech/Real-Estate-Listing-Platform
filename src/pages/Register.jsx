@@ -127,9 +127,17 @@ export default function Register() {
         token = response.data?.token || response.data?.jwt;
         user = response.data?.user;
       } catch (apiErr) {
-        if (apiErr.response) {
-          const errMsg = apiErr.response.data?.error || apiErr.response.data?.message || 'Registration failed on server.';
-          throw new Error(errMsg);
+        let serverMsg = '';
+        if (apiErr.response?.data) {
+          const d = apiErr.response.data;
+          if (typeof d === 'string') serverMsg = d;
+          else if (typeof d.error === 'string') serverMsg = d.error;
+          else if (d.error && typeof d.error.message === 'string') serverMsg = d.error.message;
+          else if (typeof d.message === 'string') serverMsg = d.message;
+        }
+
+        if (apiErr.response && serverMsg && apiErr.response.status !== 404 && apiErr.response.status !== 502) {
+          throw new Error(serverMsg);
         }
         
         // Fallback for dev/client-side demo ONLY if backend server is unreachable
@@ -169,7 +177,19 @@ export default function Register() {
       }
 
     } catch (err) {
-      setServerError(err.message || 'Registration failed. Please check your information and try again.');
+      let displayError = 'Registration failed. Please check your information and try again.';
+      if (typeof err === 'string') {
+        displayError = err;
+      } else if (err.response?.data) {
+        const d = err.response.data;
+        if (typeof d === 'string') displayError = d;
+        else if (typeof d.error === 'string') displayError = d.error;
+        else if (d.error && typeof d.error.message === 'string') displayError = d.error.message;
+        else if (typeof d.message === 'string') displayError = d.message;
+      } else if (err.message && typeof err.message === 'string' && err.message !== '[object Object]') {
+        displayError = err.message;
+      }
+      setServerError(displayError);
     } finally {
       setIsLoading(false);
     }

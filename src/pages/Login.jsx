@@ -19,6 +19,23 @@ export default function Login() {
   const successMessage = location.state?.message || '';
   const fromPath = location.state?.from?.pathname || '';
 
+  // Safely extract string message to prevent [object Object]
+  const extractErrorString = (err, defaultMsg = 'Invalid email or password.') => {
+    if (!err) return defaultMsg;
+    if (typeof err === 'string') return err;
+    if (err.response?.data) {
+      const d = err.response.data;
+      if (typeof d === 'string') return d;
+      if (typeof d.error === 'string') return d.error;
+      if (d.error && typeof d.error.message === 'string') return d.error.message;
+      if (typeof d.message === 'string') return d.message;
+    }
+    if (err.message && typeof err.message === 'string' && err.message !== '[object Object]') {
+      return err.message;
+    }
+    return defaultMsg;
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setErrorMessage('');
@@ -36,28 +53,32 @@ export default function Login() {
         token = response.data?.token || response.data?.jwt;
         user = response.data?.user;
       } catch (apiErr) {
-        // Handle server error responses (e.g. 401 Invalid Credentials, 400 Bad Request)
-        if (apiErr.response) {
-          const errMsg = apiErr.response.data?.error || apiErr.response.data?.message || 'Invalid email or password.';
-          throw new Error(errMsg);
+        // 401 indicates wrong password/email for an account in the database
+        if (apiErr.response && apiErr.response.status === 401) {
+          throw new Error('Invalid email or password. Please verify your credentials.');
         }
-        
-        // If backend server is completely offline, check local demo registry
-        console.warn('Backend API unavailable, checking local demo accounts registry:', apiErr.message);
+
+        // If backend returned an error (e.g. 500 DB connection, 404, or network timeout),
+        // check the local demo accounts registry for accounts created in demo/offline mode
+        console.warn('Backend API request failed or returned error, checking local demo registry:', apiErr.message);
         
         const registeredUsers = JSON.parse(localStorage.getItem('estate_registered_users') || '[]');
         const matched = registeredUsers.find(u => u.email?.toLowerCase() === email.trim().toLowerCase());
         
         if (matched) {
           if (matched.password && matched.password !== password) {
-            throw new Error('Invalid email or password.');
+            throw new Error('Invalid email or password. Please verify your credentials.');
           }
           user = { ...matched };
           delete user.password;
           token = `jwt_mock_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
         } else {
-          // If not in local demo registry either
-          throw new Error('Invalid email or password.');
+          // If not in local demo registry either, show server error if relevant or fallback
+          const serverMsg = extractErrorString(apiErr, '');
+          if (apiErr.response && serverMsg && apiErr.response.status !== 404 && apiErr.response.status !== 502) {
+            throw new Error(serverMsg);
+          }
+          throw new Error('Invalid email or password. Please check your credentials.');
         }
       }
 
@@ -82,7 +103,7 @@ export default function Login() {
       }
 
     } catch (err) {
-      setErrorMessage(err.message || 'Login failed. Please check your credentials.');
+      setErrorMessage(extractErrorString(err, 'Login failed. Please check your credentials.'));
     } finally {
       setIsLoading(false);
     }
